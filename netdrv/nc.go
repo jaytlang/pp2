@@ -8,6 +8,7 @@ import (
 // Servers includes ports in address strings
 // these have to be consistent with the KVPort/RaftPort
 type NetConfig struct {
+	IsRaft   bool
 	Servers  []string
 	KVPort   uint16
 	RaftPort uint16
@@ -26,4 +27,18 @@ func (c *NetConfig) DialAll() []*rpc.Client {
 		l = append(l, c)
 	}
 	return l
+}
+
+func MkDefaultNetConfig(isRaft bool) *NetConfig {
+	c := &NetConfig{
+		KVPort:   defaultKVPort,
+		RaftPort: defaultRFPort,
+	}
+
+	if isRaft {
+		c.Servers = rfList
+	} else {
+		c.Servers = kvList
+	}
+	return c
 }
