@@ -1,8 +1,9 @@
 package netdrv
 
 import (
-	"log"
+	"fmt"
 	"net/rpc"
+	"time"
 )
 
 // Servers includes ports in address strings
@@ -20,11 +21,16 @@ const defaultRFPort = 1234
 func (c *NetConfig) DialAll() []*rpc.Client {
 	l := []*rpc.Client{}
 	for _, addr := range c.Servers {
-		c, err := rpc.DialHTTP("tcp", addr)
-		if err != nil {
-			log.Fatal("failed to dial peer:", err)
+		for {
+			c, err := rpc.DialHTTP("tcp", addr)
+			if err != nil {
+				fmt.Printf("Failed to dial peer, retrying...\n")
+				time.Sleep(time.Second)
+				continue
+			}
+			l = append(l, c)
+			break
 		}
-		l = append(l, c)
 	}
 	return l
 }
