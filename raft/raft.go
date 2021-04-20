@@ -243,7 +243,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	// Does that log entry have the right term?
 	// This would constitute a collision, so we should update
 	// XTerm/XIndex
-	fmt.Printf("%d: %d: Checking LastLogIndex %d\n", rf.me, rf.term, args.LastLogIndex)
 	if rf.log[args.LastLogIndex] == nil {
 		goto fail
 	}
@@ -446,16 +445,12 @@ func Make(c *netdrv.NetConfig, me int,
 	rand.Seed(time.Now().UnixNano())
 
 	// Ready to rock. Set up RPC.
-	rpc.Register(rf)
-	rpc.HandleHTTP()
-
-	// Ready to rock. Set up RPC.
 	s := rpc.NewServer()
 	s.Register(rf)
 	s.HandleHTTP("/rfr", "/rfdb")
 
 	// KV serves on 1235, raft on 1234
-	l, e := net.Listen("tcp", fmt.Sprintf(":%d", c.KVPort))
+	l, e := net.Listen("tcp", fmt.Sprintf(":%d", c.RaftPort))
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}

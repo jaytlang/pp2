@@ -24,10 +24,11 @@ func (c *NetConfig) DialAll() []*rpc.Client {
 		for {
 			c, err := rpc.DialHTTP("tcp", addr)
 			if err != nil {
-				fmt.Printf("Failed to dial peer, retrying...\n")
+				fmt.Printf("Failed to dial %s, retrying...\n", addr)
 				time.Sleep(time.Second)
 				continue
 			}
+			fmt.Printf("Dialed %s\n", addr)
 			l = append(l, c)
 			break
 		}
