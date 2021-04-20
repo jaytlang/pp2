@@ -449,14 +449,18 @@ func Make(c *netdrv.NetConfig, me int,
 	rpc.Register(rf)
 	rpc.HandleHTTP()
 
+	// Ready to rock. Set up RPC.
+	s := rpc.NewServer()
+	s.Register(rf)
+	s.HandleHTTP("/rfr", "/rfdb")
+
 	// KV serves on 1235, raft on 1234
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", c.RaftPort))
-	if err != nil {
-		log.Fatal("listen error:", err)
+	l, e := net.Listen("tcp", fmt.Sprintf(":%d", c.KVPort))
+	if e != nil {
+		log.Fatal("listen error:", e)
 	}
 
-	// start ticker goroutine to start elections and watch commits
-	go http.Serve(ln, nil)
+	go http.Serve(l, s)
 	rf.peers = c.DialAll()
 
 	fmt.Printf("%d: %d: Raft server is up and running\n", rf.me, rf.term)

@@ -228,8 +228,9 @@ func StartKVServer(c *netdrv.NetConfig, me int, persister *raft.Persister, maxra
 	kv.maxraftsz = maxraftstate
 
 	// Ready to rock. Set up RPC.
-	rpc.Register(kv)
-	rpc.HandleHTTP()
+	s := rpc.NewServer()
+	s.Register(kv)
+	s.HandleHTTP("/kvr", "/kvdb")
 
 	// KV serves on 1235, raft on 1234
 	l, e := net.Listen("tcp", fmt.Sprintf(":%d", c.KVPort))
@@ -237,7 +238,7 @@ func StartKVServer(c *netdrv.NetConfig, me int, persister *raft.Persister, maxra
 		log.Fatal("listen error:", e)
 	}
 
-	go http.Serve(l, nil)
+	go http.Serve(l, s)
 	go kv.manageApplyCh()
 
 	return kv
