@@ -44,10 +44,11 @@ func (ps *Persister) SaveRaftState(state []byte) {
 	if err != nil {
 		log.Printf("error: %s", err.Error())
 	}
-	_, err = ofile.Write(clone(state))
+	n, err := ofile.Write(state)
 	if err != nil {
 		log.Printf("error: %s", err.Error())
 	}
+	fmt.Printf("bytes written: %d\n", n)
 	err = os.Rename(ofile.Name(), raftStateFileName)
 	if err != nil {
 		log.Printf("error: %s", err.Error())
@@ -107,5 +108,6 @@ func ReadFromDisk(name string) ([]byte, error) {
 	}
 
 	file.Close()
+	fmt.Printf("length of byte slice: %d\n", len(byteSlice))
 	return byteSlice, nil
 }

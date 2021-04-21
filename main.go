@@ -71,7 +71,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		kvraft.StartKVServer(rc, me, raft.MakePersister(), 4096)
+		kvraft.StartKVServer(rc, me, raft.MakePersister(), 50)
 
 		rdr := bufio.NewReader(os.Stdin)
 		fmt.Printf("Press enter to kill kv...")

@@ -106,12 +106,13 @@ func (kv *KVServer) pullLatestSnapshot(p *raft.Persister) {
 	buf = bytes.NewBuffer(snapshot)
 	d = labgob.NewDecoder(buf)
 	if d.Decode(&s) != nil {
-		log.Fatal("Get better decode error checking!")
+		fmt.Printf("KV: SS: No snapshot to pull!\n")
+	} else {
+		kv.kvm = s.Kvm
+		kv.unseen = s.Unseen
+		kv.unwritten = s.Unwritten
+		kv.last = s.Last
+		fmt.Printf("KV: SS: Pulled snapshot during restart\n")
 	}
 
-	kv.kvm = s.Kvm
-	kv.unseen = s.Unseen
-	kv.unwritten = s.Unwritten
-	kv.last = s.Last
-	fmt.Printf("KV: SS: Pulled snapshot during restart\n")
 }
