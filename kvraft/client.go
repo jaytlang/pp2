@@ -61,7 +61,6 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 		case ok := <-rc:
 			if ok != nil {
 				ck.mu.Lock()
-				// Spammy
 				c, err := rpc.DialHTTP("tcp", ck.c.Servers[l])
 				if err != nil {
 					ck.servers[l] = c
@@ -87,6 +86,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 			l = 0
 		}
 
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 
