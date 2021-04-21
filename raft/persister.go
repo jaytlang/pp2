@@ -39,9 +39,18 @@ func (ps *Persister) SaveRaftState(state []byte) {
 	if err != nil {
 		log.Print("cannot get working directory")
 	}
-	ofile, _ := ioutil.TempFile(wd, "temp"+raftStateFileName)
-	ofile.Write(clone(state))
-	os.Rename(ofile.Name(), raftStateFileName)
+	ofile, err := ioutil.TempFile(wd, "temp"+raftStateFileName)
+	if err != nil {
+		log.Printf("error: %s", err.Error())
+	}
+	_, err = ofile.Write(clone(state))
+	if err != nil {
+		log.Printf("error: %s", err.Error())
+	}
+	err = os.Rename(ofile.Name(), raftStateFileName)
+	if err != nil {
+		log.Printf("error: %s", err.Error())
+	}
 	ofile.Close()
 }
 
