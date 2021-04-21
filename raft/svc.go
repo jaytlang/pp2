@@ -21,5 +21,6 @@ func (rf *Raft) svcServer(idx int) {
 		fmt.Printf("%d: %d: Redialed server %d\n", rf.me, rf.term, idx)
 		rf.peers[idx] = c
 		rf.mu.Unlock()
+		break
 	}
 }
