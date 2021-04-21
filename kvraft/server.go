@@ -239,6 +239,7 @@ func StartKVServer(c *netdrv.NetConfig, me int, persister *raft.Persister, maxra
 	}
 
 	go http.Serve(l, s)
+	fmt.Printf("KV: DBG: SERVING HTTP NOW OVER 1235\n")
 	go kv.manageApplyCh()
 
 	return kv
