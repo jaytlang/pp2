@@ -65,7 +65,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 			if ok != nil {
 				ck.mu.Lock()
 				c, err := rpc.DialHTTP("tcp", ck.c.Servers[l])
-				if err != nil {
+				if err == nil {
 					ck.servers[l] = c
 				}
 				ck.mu.Unlock()
