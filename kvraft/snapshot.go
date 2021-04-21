@@ -99,7 +99,7 @@ func (kv *KVServer) pullLatestSnapshot(p *raft.Persister) {
 	d.Decode(&lg)
 	err2 := d.Decode(&snapshot)
 	if err1 != nil || err2 != nil {
-		log.Fatal("Get better decode error checking!")
+		log.Fatal("Get better decode error checking 1!")
 	}
 
 	s := Snapshot{}
