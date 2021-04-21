@@ -9,12 +9,17 @@ package raft
 // test with the original before submitting.
 //
 
-import "sync"
+import (
+	"io/ioutil"
+	"log"
+	"os"
+	"sync"
+)
+
+const raftStateFileName string = "persiststate"
 
 type Persister struct {
-	mu        sync.Mutex
-	raftstate []byte
-	snapshot  []byte
+	mu sync.Mutex
 }
 
 func MakePersister() *Persister {
@@ -27,50 +32,65 @@ func clone(orig []byte) []byte {
 	return x
 }
 
-func (ps *Persister) Copy() *Persister {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	np := MakePersister()
-	np.raftstate = ps.raftstate
-	np.snapshot = ps.snapshot
-	return np
-}
-
 func (ps *Persister) SaveRaftState(state []byte) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	ps.raftstate = clone(state)
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Print("cannot get working directory")
+	}
+	ofile, _ := ioutil.TempFile(wd, "temp"+raftStateFileName)
+	ofile.Write(clone(state))
+	os.Rename(ofile.Name(), raftStateFileName)
+	ofile.Close()
 }
 
 func (ps *Persister) ReadRaftState() []byte {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	return clone(ps.raftstate)
+	raftState, err := ReadFromDisk(raftStateFileName)
+	if err != nil {
+		return raftState
+	} else {
+		return nil
+	}
 }
 
 func (ps *Persister) RaftStateSize() int {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	return len(ps.raftstate)
+	raftState, err := ReadFromDisk(raftStateFileName)
+	if err != nil {
+		return len(raftState)
+	} else {
+		return -1
+	}
 }
 
-// Save both Raft state and K/V snapshot as a single atomic action,
-// to help avoid them getting out of sync.
-func (ps *Persister) SaveStateAndSnapshot(state []byte, snapshot []byte) {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	ps.raftstate = clone(state)
-	ps.snapshot = clone(snapshot)
-}
+func ReadFromDisk(name string) ([]byte, error) {
+	byteSlice := make([]byte, 0)
+	err := error(nil)
+	file, openErr := os.Open(name)
+	if openErr != nil {
+		log.Print(openErr)
+		err = openErr
+		return byteSlice, err
+	}
 
-func (ps *Persister) ReadSnapshot() []byte {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	return clone(ps.snapshot)
-}
+	fileInfo, infoErr := file.Stat()
+	if infoErr != nil {
+		log.Print(infoErr)
+		return byteSlice, err
+	}
 
-func (ps *Persister) SnapshotSize() int {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	return len(ps.snapshot)
+	byteSlice = make([]byte, fileInfo.Size())
+
+	_, readErr := file.Read(byteSlice)
+	if readErr != nil {
+		log.Print(readErr)
+		return byteSlice, err
+	}
+
+	file.Close()
+	return byteSlice, err
 }
