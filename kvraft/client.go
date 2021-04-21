@@ -54,7 +54,10 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 		rc := make(chan error)
 		go func(idx int) {
 			// Fails immediately if server is down
-			rc <- ck.servers[idx].Call("KVServer.Request", a, r)
+			ck.mu.Lock()
+			res := ck.servers[idx].Call("KVServer.Request", a, r)
+			ck.mu.Unlock()
+			rc <- res
 		}(l)
 
 		select {
