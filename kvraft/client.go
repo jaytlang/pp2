@@ -14,13 +14,14 @@ type Clerk struct {
 	id      uint
 	servers []*rpc.Client
 	lastLdr int
+	c       *netdrv.NetConfig
 }
 
 // Utility functions...
 func MakeClerk(c *netdrv.NetConfig) *Clerk {
 	ck := new(Clerk)
 	ck.servers = c.DialAll()
-
+	ck.c = c
 	ck.id = ck.mkSeq()
 	return ck
 }
@@ -52,11 +53,21 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 		r := new(RequestReply)
 		rc := make(chan error)
 		go func() {
+			// Fails immediately if server is down
 			rc <- ck.servers[l].Call("KVServer.Request", a, r)
 		}()
 
 		select {
 		case ok := <-rc:
+			if ok != nil {
+				ck.mu.Lock()
+				// Spammy
+				c, err := rpc.DialHTTP("tcp", ck.c.Servers[l])
+				if err != nil {
+					ck.servers[l] = c
+				}
+				ck.mu.Unlock()
+			}
 			if ok != nil || r.E == ErrWrongLeader || r.E == ErrTimeout {
 				goto retry
 			} else {

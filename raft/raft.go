@@ -57,6 +57,8 @@ type Raft struct {
 	me        int           // this peer's index into peers[]
 	dead      int32         // set by Kill()
 
+	c *netdrv.NetConfig
+
 	term     int
 	votedFor int
 	st       State
@@ -334,16 +336,25 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 // to hold the lock here, which allows parallelization
 func (rf *Raft) doRV(server int, args *RequestVoteArgs, reply *RequestVoteReply) error {
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
+	if ok != nil {
+		go rf.svcServer(server)
+	}
 	return ok
 }
 
 func (rf *Raft) doAE(server int, args *AppendEntriesArgs, reply *AppendEntriesReply) error {
 	ok := rf.peers[server].Call("Raft.AppendEntries", args, reply)
+	if ok != nil {
+		go rf.svcServer(server)
+	}
 	return ok
 }
 
 func (rf *Raft) doIS(server int, args *InstallSnapshotArgs, reply *InstallSnapshotReply) error {
 	ok := rf.peers[server].Call("Raft.InstallSnapshot", args, reply)
+	if ok != nil {
+		go rf.svcServer(server)
+	}
 	return ok
 }
 
@@ -423,6 +434,7 @@ func Make(c *netdrv.NetConfig, me int,
 	rf := &Raft{}
 	rf.Persister = persister
 	rf.me = me
+	rf.c = c
 	fmt.Printf("%d: X: Raft server is coming online\n", rf.me)
 
 	// 2A initialization
