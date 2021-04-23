@@ -1,12 +1,14 @@
 GOFLAGS = -race
+FMTFLAGS = -s -w
 TARGET = pp2
 TMPFILES = persiststate
 
-.PHONY: all clean
-all: $(TARGET)
+.PHONY: all format clean
+all: format
+	go build $(GOFLAGS) -o $(TARGET)
 
-$(TARGET):
-	go build $(GOFLAGS) -o $@
+format:
+	gofmt $(FMTFLAGS) .
 
 clean:
 	$(RM) $(TARGET) $(TMPFILES)
