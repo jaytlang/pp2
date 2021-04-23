@@ -50,9 +50,6 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		}
 		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d", cmd.ClientId)
 	case ReleaseOp:
-		if kv.kvm["lock_"+cmd.Key] == "" {
-			return errors.New("failed to release, lock not held")
-		}
 		kv.kvm["lock_"+cmd.Key] = ""
 	}
 	return nil
@@ -200,6 +197,7 @@ func (kv *KVServer) manageApplyCh() {
 				err := kv.commitOp(cmd)
 				if err != nil {
 					if cmd.Code == AcquireOp {
+						fmt.Printf("KV: LOCK: Note that acquire failed!\n")
 						cmd.Code = FailingAcquireOp
 						v.Command = &cmd
 					}

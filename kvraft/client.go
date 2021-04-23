@@ -19,6 +19,7 @@ type Clerk struct {
 
 // Utility functions...
 func MakeClerk(c *netdrv.NetConfig) *Clerk {
+	rand.Seed(time.Now().Unix())
 	ck := new(Clerk)
 	ck.servers = c.DialAll()
 	ck.c = c
