@@ -1,6 +1,7 @@
 package kvraft
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -37,13 +38,24 @@ type KVServer struct {
 
 // Helpers for the actual map
 // Responsible for reply.Value, reply.E
-func (kv *KVServer) commitOp(cmd RequestArgs) {
+func (kv *KVServer) commitOp(cmd RequestArgs) error {
 	switch cmd.Code {
 	case PutOp:
 		kv.kvm[cmd.Key] = cmd.Value
 	case AppendOp:
 		kv.kvm[cmd.Key] += cmd.Value
+	case AcquireOp:
+		if kv.kvm["lock_"+cmd.Key] != "" {
+			return errors.New("failed to acquire")
+		}
+		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d", kv.me)
+	case ReleaseOp:
+		if kv.kvm["lock_"+cmd.Key] == "" {
+			return errors.New("failed to release, lock not held")
+		}
+		kv.kvm["lock_"+cmd.Key] = ""
 	}
+	return nil
 }
 
 func (kv *KVServer) Request(args *RequestArgs, reply *RequestReply) error {
@@ -99,6 +111,8 @@ rerequest:
 				} else {
 					reply.E = ErrNoKey
 				}
+			} else if cmd.Code == FailingAcquireOp {
+				reply.E = ErrLockHeld
 			} else {
 				reply.E = OK
 			}
@@ -183,9 +197,29 @@ func (kv *KVServer) manageApplyCh() {
 			// Has the op been written?
 			if _, ok := kv.unwritten[cmd.Seq]; ok {
 				fmt.Printf("KV: MCH: Writing operation %d\n", v.CommandIndex)
-				kv.commitOp(cmd)
+				err := kv.commitOp(cmd)
+				if err != nil {
+					if cmd.Code == AcquireOp {
+						cmd.Code = FailingAcquireOp
+						v.Command = &cmd
+					} else if cmd.Code == ReleaseOp {
+						cmd.Code = FailingReleaseOp
+						v.Command = &cmd
+					}
+				}
 
 				delete(kv.unwritten, cmd.Seq)
+			} else {
+				// if the op has been written, and it's an Acquire/Release,
+				// we switch the opcode based on whether the person in question
+				// holds the lock at the time of checking. this ensures consistency
+				// from their end.
+				if cmd.Code == AcquireOp {
+					if kv.kvm["lock_"+cmd.Key] != fmt.Sprintf("%d", kv.me) {
+						cmd.Code = FailingAcquireOp
+						v.Command = &cmd
+					}
+				}
 			}
 
 			// Before we go, snapshots!

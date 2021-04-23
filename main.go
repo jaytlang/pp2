@@ -37,6 +37,18 @@ func runCli(c *kvraft.Clerk) {
 			}
 			c.Append(i[1], i[2])
 			fmt.Printf("%s += %s\n", i[1], i[2])
+		case "acquire":
+			if len(i) != 2 {
+				goto badcmd
+			}
+			c.Acquire(i[1])
+			fmt.Printf("%s is ACQUIRED\n", i[1])
+		case "release":
+			if len(i) != 2 {
+				goto badcmd
+			}
+			c.Release(i[1])
+			fmt.Printf("%s is RELEASED\n", i[1])
 		}
 		continue
 

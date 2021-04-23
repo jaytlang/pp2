@@ -6,6 +6,7 @@ const (
 	OK Err = iota
 	ErrNoKey
 	ErrWrongLeader
+	ErrLockHeld
 	ErrTimeout
 )
 
@@ -15,6 +16,10 @@ const (
 	GetOp OpCode = iota
 	PutOp
 	AppendOp
+	AcquireOp
+	FailingAcquireOp
+	ReleaseOp
+	FailingReleaseOp
 )
 
 type RequestArgs struct {

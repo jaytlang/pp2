@@ -70,7 +70,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 				}
 				ck.mu.Unlock()
 			}
-			if ok != nil || r.E == ErrWrongLeader || r.E == ErrTimeout {
+			if ok != nil || r.E == ErrWrongLeader || r.E == ErrTimeout || r.E == ErrLockHeld {
 				goto retry
 			} else {
 				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
@@ -101,4 +101,12 @@ func (ck *Clerk) Put(key string, value string) {
 }
 func (ck *Clerk) Append(key string, value string) {
 	ck.doRequest(AppendOp, key, value)
+}
+
+func (ck *Clerk) Acquire(lockk string) {
+	ck.doRequest(AcquireOp, lockk, "")
+}
+
+func (ck *Clerk) Release(lockk string) {
+	ck.doRequest(ReleaseOp, lockk, "")
 }
