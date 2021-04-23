@@ -71,7 +71,12 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 				}
 				ck.mu.Unlock()
 			}
-			if ok != nil || r.E == ErrWrongLeader || r.E == ErrTimeout || r.E == ErrLockHeld {
+			if ok != nil || r.E == ErrWrongLeader || r.E == ErrTimeout {
+				goto retry
+			} else if r.E == ErrLockHeld {
+				// Reset sequence number and try again
+				a.Seq = ck.mkSeq()
+				time.Sleep(500 * time.Millisecond)
 				goto retry
 			} else {
 				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
