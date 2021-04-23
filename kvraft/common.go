@@ -1,5 +1,7 @@
 package kvraft
 
+import "time"
+
 type Err int
 
 const (
@@ -34,3 +36,5 @@ type RequestReply struct {
 	E     Err
 	Value string
 }
+
+const lockLeaseTime = 5 * time.Second

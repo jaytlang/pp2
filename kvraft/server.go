@@ -9,6 +9,7 @@ import (
 	"net/rpc"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"pp2/labgob"
 	"pp2/netdrv"
@@ -48,7 +49,18 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		if kv.kvm["lock_"+cmd.Key] != "" {
 			return errors.New("failed to acquire")
 		}
+
+		// Acquire
 		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d", cmd.ClientId)
+
+		// After 5 seconds, release
+		go func(k string) {
+			time.Sleep(lockLeaseTime)
+			kv.mu.Lock()
+			defer kv.mu.Unlock()
+			kv.kvm["lock_"+k] = ""
+		}(cmd.Key)
+
 	case ReleaseOp:
 		kv.kvm["lock_"+cmd.Key] = ""
 	}
