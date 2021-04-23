@@ -7,8 +7,8 @@ import (
 
 // In lieu of dynamically updatable configuration,
 // use these lists to set up ncs
-var kvList []string = []string{"192.168.0.19:1235", "192.168.0.20:1235", "192.168.0.18:1235"}
-var rfList []string = []string{"192.168.0.19:1234", "192.168.0.20:1234", "192.168.0.18:1234"}
+var kvList []string = []string{"192.168.0.19:1235", "192.168.0.20:1235", "192.168.0.10:1235"}
+var rfList []string = []string{"192.168.0.19:1234", "192.168.0.20:1234", "192.168.0.10:1234"}
 
 // Update this prior to compilation to
 // set your own IP address
