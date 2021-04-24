@@ -39,28 +39,31 @@ type KVServer struct {
 }
 
 func (kv *KVServer) checkHoldLock(cmd RequestArgs) bool {
-  ov := kv.kvm["lock_"+cmd.Key]
-  if ov == "" {
-    return false
-  }
+	ov := kv.kvm["lock_"+cmd.Key]
+	if ov == "" {
+		return false
+	}
 
-  cid, _ := strconv.Atoi(strings.Split(ov, "/")[0])
-  return cid == int(cmd.ClientId)
+	cid, _ := strconv.Atoi(strings.Split(ov, "/")[0])
+	return cid == int(cmd.ClientId)
 }
 
 // Helpers for the actual map
 // Responsible for reply.Value, reply.E
 func (kv *KVServer) commitOp(cmd RequestArgs) error {
 	switch cmd.Code {
-  // XXX: error checking for not holding lock?
 	case PutOp:
-    if kv.checkHoldLock(cmd) {
-      kv.kvm[cmd.Key] = cmd.Value
-    }
+		if kv.checkHoldLock(cmd) {
+			kv.kvm[cmd.Key] = cmd.Value
+		} else {
+			return errors.New("not holding lock")
+		}
 	case AppendOp:
-    if kv.checkHoldLock(cmd) {
-      kv.kvm[cmd.Key] += cmd.Value
-    }
+		if kv.checkHoldLock(cmd) {
+			kv.kvm[cmd.Key] += cmd.Value
+		} else {
+			return errors.New("not holding lock")
+		}
 	case AcquireOp:
 		ov := kv.kvm["lock_"+cmd.Key]
 		if ov != "" {
@@ -76,7 +79,11 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d/%s", cmd.ClientId, cmd.Value)
 
 	case ReleaseOp:
-		kv.kvm["lock_"+cmd.Key] = ""
+		if kv.checkHoldLock(cmd) {
+			kv.kvm["lock_"+cmd.Key] = ""
+		} else {
+			return errors.New("not holding lock")
+		}
 	}
 	return nil
 }
@@ -135,6 +142,7 @@ rerequest:
 					reply.E = ErrNoKey
 				}
 			} else if cmd.Code == FailingAcquireOp {
+				// XXX: let's say we get this for a get/put, we aren't retrying to acquire the lock
 				reply.E = ErrLockHeld
 			} else {
 				reply.E = OK
@@ -224,6 +232,11 @@ func (kv *KVServer) manageApplyCh() {
 				if err != nil {
 					if cmd.Code == AcquireOp {
 						fmt.Printf("KV: LOCK: Note that acquire failed!\n")
+						cmd.Code = FailingAcquireOp
+						v.Command = &cmd
+					} else {
+						// XXX: If correct, should refactor
+						fmt.Printf("KV: LOCK: Lock was not held when trying to do operation!\n")
 						cmd.Code = FailingAcquireOp
 						v.Command = &cmd
 					}
