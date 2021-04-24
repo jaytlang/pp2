@@ -50,7 +50,7 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		ov := kv.kvm["lock_"+cmd.Key]
 		if ov != "" {
 			ts, _ := strconv.Atoi(strings.Split(ov, "/")[1])
-			if nt, _ := strconv.Atoi(strings.Split(cmd.Value, "/")[1]); nt-ts > lockLeaseTime {
+			if nt, _ := strconv.Atoi(cmd.Value); nt-ts > lockLeaseTime {
 				goto doAcquire
 			}
 			return errors.New("failed to acquire")
