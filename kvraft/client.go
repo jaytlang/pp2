@@ -77,6 +77,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 				// Reset sequence number and try again
 				a.Seq = ck.mkSeq()
 				time.Sleep(500 * time.Millisecond)
+				a.Value = fmt.Sprintf("%d", time.Now().Unix())
 				goto retry
 			} else {
 				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
