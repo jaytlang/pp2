@@ -142,8 +142,9 @@ rerequest:
 					reply.E = ErrNoKey
 				}
 			} else if cmd.Code == FailingAcquireOp {
-				// XXX: let's say we get this for a get/put, we aren't retrying to acquire the lock
 				reply.E = ErrLockHeld
+			} else if cmd.Code == FailingLockedOp {
+				reply.E = ErrLockNotHeld
 			} else {
 				reply.E = OK
 			}
@@ -235,9 +236,8 @@ func (kv *KVServer) manageApplyCh() {
 						cmd.Code = FailingAcquireOp
 						v.Command = &cmd
 					} else {
-						// XXX: If correct, should refactor
 						fmt.Printf("KV: LOCK: Lock was not held when trying to do operation!\n")
-						cmd.Code = FailingAcquireOp
+						cmd.Code = FailingLockedOp
 						v.Command = &cmd
 					}
 				}

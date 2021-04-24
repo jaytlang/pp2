@@ -1,6 +1,7 @@
 package kvraft
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/rpc"
@@ -31,7 +32,7 @@ func (ck *Clerk) mkSeq() uint {
 	return uint(rand.Uint64())
 }
 
-func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
+func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) {
 	a := new(RequestArgs)
 
 	ck.mu.Lock()
@@ -79,11 +80,14 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 				time.Sleep(500 * time.Millisecond)
 				a.Value = fmt.Sprintf("%d", time.Now().Unix())
 				goto retry
+			} else if r.E == ErrLockNotHeld {
+				fmt.Printf("KV: C: Failed to execute operation %v, lock not held\n", op)
+				return "", errors.New("lock not held")
 			} else {
 				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
 				ck.mu.Lock()
 				ck.lastLdr = l
-				return r.Value
+				return r.Value, nil
 			}
 
 		case <-time.After(time.Second):
@@ -100,20 +104,23 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) string {
 	}
 }
 
-func (ck *Clerk) Get(key string) string {
+func (ck *Clerk) Get(key string) (string, error) {
 	return ck.doRequest(GetOp, key, "")
 }
-func (ck *Clerk) Put(key string, value string) {
-	ck.doRequest(PutOp, key, value)
+func (ck *Clerk) Put(key string, value string) error {
+	_, err := ck.doRequest(PutOp, key, value)
+	return err
 }
-func (ck *Clerk) Append(key string, value string) {
-	ck.doRequest(AppendOp, key, value)
+func (ck *Clerk) Append(key string, value string) error {
+	_, err := ck.doRequest(AppendOp, key, value)
+	return err
 }
 
 func (ck *Clerk) Acquire(lockk string) {
 	ck.doRequest(AcquireOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
 }
 
-func (ck *Clerk) Release(lockk string) {
-	ck.doRequest(ReleaseOp, lockk, "")
+func (ck *Clerk) Release(lockk string) error {
+	_, err := ck.doRequest(ReleaseOp, lockk, "")
+	return err
 }

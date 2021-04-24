@@ -7,6 +7,7 @@ const (
 	ErrNoKey
 	ErrWrongLeader
 	ErrLockHeld
+	ErrLockNotHeld
 	ErrTimeout
 )
 
@@ -17,8 +18,9 @@ const (
 	PutOp
 	AppendOp
 	AcquireOp
-	FailingAcquireOp
 	ReleaseOp
+	FailingAcquireOp
+	FailingLockedOp
 )
 
 type RequestArgs struct {

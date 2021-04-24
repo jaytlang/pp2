@@ -24,19 +24,26 @@ func runCli(c *kvraft.Clerk) {
 			if len(i) != 2 {
 				goto badcmd
 			}
-			fmt.Printf("%s -> %s\n", i[1], c.Get(i[1]))
+			res, err := c.Get(i[1])
+			if err != nil {
+				fmt.Printf("%s -> %s\n", i[1], res)
+			}
 		case "put":
 			if len(i) != 3 {
 				goto badcmd
 			}
-			c.Put(i[1], i[2])
-			fmt.Printf("%s now -> %s\n", i[1], i[2])
+			err := c.Put(i[1], i[2])
+			if err != nil {
+				fmt.Printf("%s now -> %s\n", i[1], i[2])
+			}
 		case "append":
 			if len(i) != 3 {
 				goto badcmd
 			}
-			c.Append(i[1], i[2])
-			fmt.Printf("%s += %s\n", i[1], i[2])
+			err := c.Append(i[1], i[2])
+			if err != nil {
+				fmt.Printf("%s += %s\n", i[1], i[2])
+			}
 		case "acquire":
 			if len(i) != 2 {
 				goto badcmd
@@ -47,8 +54,10 @@ func runCli(c *kvraft.Clerk) {
 			if len(i) != 2 {
 				goto badcmd
 			}
-			c.Release(i[1])
-			fmt.Printf("%s is RELEASED\n", i[1])
+			err := c.Release(i[1])
+			if err != nil {
+				fmt.Printf("%s is RELEASED\n", i[1])
+			}
 		}
 		continue
 
