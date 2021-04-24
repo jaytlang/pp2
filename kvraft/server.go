@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -45,12 +47,18 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 	case AppendOp:
 		kv.kvm[cmd.Key] += cmd.Value
 	case AcquireOp:
-		if kv.kvm["lock_"+cmd.Key] != "" {
+		ov := kv.kvm["lock_"+cmd.Key]
+		if ov != "" {
+			ts, _ := strconv.Atoi(strings.Split(ov, "/")[1])
+			if nt, _ := strconv.Atoi(strings.Split(cmd.Value, "/")[1]); nt-ts > lockLeaseTime {
+				goto doAcquire
+			}
 			return errors.New("failed to acquire")
 		}
 
 		// Acquire
-		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d", cmd.ClientId)
+	doAcquire:
+		kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d/%s", cmd.ClientId, cmd.Value)
 
 	case ReleaseOp:
 		kv.kvm["lock_"+cmd.Key] = ""
@@ -213,7 +221,8 @@ func (kv *KVServer) manageApplyCh() {
 				// holds the lock at the time of checking. this ensures consistency
 				// from their end.
 				if cmd.Code == AcquireOp {
-					if kv.kvm["lock_"+cmd.Key] != fmt.Sprintf("%d", cmd.ClientId) {
+					cc := strings.Split(kv.kvm["lock_"+cmd.Key], "/")[0]
+					if cc != fmt.Sprintf("%d", cmd.ClientId) {
 						cmd.Code = FailingAcquireOp
 						v.Command = &cmd
 					}

@@ -110,7 +110,7 @@ func (ck *Clerk) Append(key string, value string) {
 }
 
 func (ck *Clerk) Acquire(lockk string) {
-	ck.doRequest(AcquireOp, lockk, "")
+	ck.doRequest(AcquireOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
 }
 
 func (ck *Clerk) Release(lockk string) {
