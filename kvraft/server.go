@@ -38,14 +38,29 @@ type KVServer struct {
 	topidx    int
 }
 
+func (kv *KVServer) checkHoldLock(cmd RequestArgs) bool {
+  ov := kv.kvm["lock_"+cmd.Key]
+  if ov == "" {
+    return false
+  }
+
+  cid, _ := strconv.Atoi(strings.Split(ov, "/")[0])
+  return cid == int(cmd.ClientId)
+}
+
 // Helpers for the actual map
 // Responsible for reply.Value, reply.E
 func (kv *KVServer) commitOp(cmd RequestArgs) error {
 	switch cmd.Code {
+  // XXX: error checking for not holding lock?
 	case PutOp:
-		kv.kvm[cmd.Key] = cmd.Value
+    if kv.checkHoldLock(cmd) {
+      kv.kvm[cmd.Key] = cmd.Value
+    }
 	case AppendOp:
-		kv.kvm[cmd.Key] += cmd.Value
+    if kv.checkHoldLock(cmd) {
+      kv.kvm[cmd.Key] += cmd.Value
+    }
 	case AcquireOp:
 		ov := kv.kvm["lock_"+cmd.Key]
 		if ov != "" {
