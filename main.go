@@ -25,7 +25,7 @@ func runCli(c *kvraft.Clerk) {
 				goto badcmd
 			}
 			res, err := c.Get(i[1])
-			if err != nil {
+			if err == nil {
 				fmt.Printf("%s -> %s\n", i[1], res)
 			}
 		case "put":
@@ -33,7 +33,7 @@ func runCli(c *kvraft.Clerk) {
 				goto badcmd
 			}
 			err := c.Put(i[1], i[2])
-			if err != nil {
+			if err == nil {
 				fmt.Printf("%s now -> %s\n", i[1], i[2])
 			}
 		case "append":
@@ -41,7 +41,7 @@ func runCli(c *kvraft.Clerk) {
 				goto badcmd
 			}
 			err := c.Append(i[1], i[2])
-			if err != nil {
+			if err == nil {
 				fmt.Printf("%s += %s\n", i[1], i[2])
 			}
 		case "acquire":
@@ -55,7 +55,7 @@ func runCli(c *kvraft.Clerk) {
 				goto badcmd
 			}
 			err := c.Release(i[1])
-			if err != nil {
+			if err == nil {
 				fmt.Printf("%s is RELEASED\n", i[1])
 			}
 		}

@@ -249,12 +249,13 @@ func (kv *KVServer) manageApplyCh() {
 				// we switch the opcode based on whether the person in question
 				// holds the lock at the time of checking. this ensures consistency
 				// from their end.
-				if cmd.Code == AcquireOp {
-					cc := strings.Split(kv.kvm["lock_"+cmd.Key], "/")[0]
-					if cc != fmt.Sprintf("%d", cmd.ClientId) {
+				if !kv.checkHoldLock(cmd) {
+					if cmd.Code == AcquireOp {
 						cmd.Code = FailingAcquireOp
-						v.Command = &cmd
+					} else {
+						cmd.Code = FailingLockedOp
 					}
+					v.Command = &cmd
 				}
 			}
 
