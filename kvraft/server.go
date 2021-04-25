@@ -45,7 +45,7 @@ func (kv *KVServer) checkHoldLock(cmd RequestArgs) bool {
 	}
 
 	cid, _ := strconv.Atoi(strings.Split(ov, "/")[0])
-	return cid == int(cmd.ClientId)
+	return uint(cid) == cmd.ClientId
 }
 
 // Helpers for the actual map
@@ -80,6 +80,7 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 
 	case ReleaseOp:
 		if kv.checkHoldLock(cmd) {
+			fmt.Printf("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n")
 			kv.kvm["lock_"+cmd.Key] = ""
 		} else {
 			return errors.New("not holding lock")

@@ -36,7 +36,6 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) 
 	a := new(RequestArgs)
 
 	ck.mu.Lock()
-	defer ck.mu.Unlock()
 
 	s := ck.mkSeq()
 	l := ck.lastLdr
@@ -87,6 +86,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) 
 				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
 				ck.mu.Lock()
 				ck.lastLdr = l
+				ck.mu.Unlock()
 				return r.Value, nil
 			}
 
