@@ -139,17 +139,17 @@ rerequest:
 			kv.mu.Lock()
 			defer kv.mu.Unlock()
 
-			if args.Code == GetOp {
+			if cmd.Code == FailingAcquireOp {
+				reply.E = ErrLockHeld
+			} else if cmd.Code == FailingLockedOp {
+				reply.E = ErrLockNotHeld
+			} else if args.Code == GetOp {
 				if k, ok := kv.kvm[args.Key]; ok {
 					reply.Value = k
 					reply.E = OK
 				} else {
 					reply.E = ErrNoKey
 				}
-			} else if cmd.Code == FailingAcquireOp {
-				reply.E = ErrLockHeld
-			} else if cmd.Code == FailingLockedOp {
-				reply.E = ErrLockNotHeld
 			} else {
 				reply.E = OK
 			}
