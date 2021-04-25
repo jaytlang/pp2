@@ -52,6 +52,10 @@ func (kv *KVServer) checkHoldLock(cmd RequestArgs) bool {
 // Responsible for reply.Value, reply.E
 func (kv *KVServer) commitOp(cmd RequestArgs) error {
 	switch cmd.Code {
+	case GetOp:
+		if !kv.checkHoldLock(cmd) {
+			return errors.New("not holding lock")
+		}
 	case PutOp:
 		if kv.checkHoldLock(cmd) {
 			kv.kvm[cmd.Key] = cmd.Value
