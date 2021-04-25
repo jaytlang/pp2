@@ -7,11 +7,11 @@ import (
 
 // In lieu of dynamically updatable configuration,
 // use these lists to set up ncs
-var ipList []string = []string{"192.168.0.19", "192.168.0.20", "192.168.0.10"}
+var ipList []string = []string{"10.0.0.197", "10.0.0.186", "10.0.0.128"}
 
 // Update this prior to compilation to
 // set your own IP address
-var myIp = "192.168.0.19"
+var myIp = "10.0.0.197"
 
 func (c *NetConfig) GetMe() (int, error) {
 	me := myIp
