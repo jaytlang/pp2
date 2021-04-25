@@ -21,6 +21,7 @@ func (c *NetConfig) GetMe() (int, error) {
 		me += ":1235"
 	}
 
+	fmt.Printf("%v in %v?\n", me, c.Servers)
 	for i, srv := range c.Servers {
 		if srv == me {
 			return i, nil

@@ -37,21 +37,24 @@ func (c *NetConfig) DialAll() []*rpc.Client {
 }
 
 func MkDefaultNetConfig(isRaft bool) *NetConfig {
-	c := &NetConfig{
+	c := NetConfig{
 		KVPort:   defaultKVPort,
 		RaftPort: defaultRFPort,
+		IsRaft:   isRaft,
 	}
 
+	c.Servers = []string{}
+	c.Servers = append(c.Servers, ipList...)
+
 	if isRaft {
-		c.Servers = rfList
 		for idx, addr := range c.Servers {
-			c.Servers[idx] = addr + fmt.Sprint(defaultRFPort)
+			c.Servers[idx] = addr + ":" + fmt.Sprint(defaultRFPort)
 		}
 	} else {
-		c.Servers = kvList
 		for idx, addr := range c.Servers {
-			c.Servers[idx] = addr + fmt.Sprint(defaultKVPort)
+			c.Servers[idx] = addr + ":" + fmt.Sprint(defaultKVPort)
 		}
 	}
-	return c
+	fmt.Printf("CSERVERS: %v\n", c.Servers)
+	return &c
 }
