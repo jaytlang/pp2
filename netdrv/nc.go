@@ -44,8 +44,14 @@ func MkDefaultNetConfig(isRaft bool) *NetConfig {
 
 	if isRaft {
 		c.Servers = rfList
+		for idx, addr := range c.Servers {
+			c.Servers[idx] = addr + fmt.Sprint(defaultRFPort)
+		}
 	} else {
 		c.Servers = kvList
+		for idx, addr := range c.Servers {
+			c.Servers[idx] = addr + fmt.Sprint(defaultKVPort)
+		}
 	}
 	return c
 }
