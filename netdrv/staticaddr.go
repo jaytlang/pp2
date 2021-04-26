@@ -6,7 +6,7 @@ import (
 
 // In lieu of dynamically updatable configuration,
 // use these lists to set up ncs
-var ipList []string = []string{"10.0.0.197", "10.0.0.186", "10.0.0.128"}
+var ipList []string = []string{"10.0.0.198", "10.0.0.187", "10.0.0.129"}
 
 // Update this prior to compilation to
 // set your own IP address
