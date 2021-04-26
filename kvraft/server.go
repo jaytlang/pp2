@@ -44,7 +44,7 @@ func (kv *KVServer) checkHoldLock(cmd RequestArgs) bool {
 		return false
 	}
 
-	cid, _ := strconv.Atoi(strings.Split(ov, "/")[0])
+	cid, _ := strconv.ParseUint(strings.Split(ov, "/")[0], 0, 64)
 	return uint(cid) == cmd.ClientId
 }
 
