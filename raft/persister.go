@@ -37,7 +37,7 @@ func (ps *Persister) SaveRaftState(state []byte) {
 	if err != nil {
 		log.Printf("error: %s", err.Error())
 	}
-	n, err := ofile.Write(state)
+	_, err = ofile.Write(state)
 	if err != nil {
 		log.Printf("error: %s", err.Error())
 	}
