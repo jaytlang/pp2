@@ -10,7 +10,6 @@ package raft
 //
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -42,7 +41,7 @@ func (ps *Persister) SaveRaftState(state []byte) {
 	if err != nil {
 		log.Printf("error: %s", err.Error())
 	}
-	fmt.Printf("bytes written: %d\n", n)
+	//fmt.Printf("bytes written: %d\n", n)
 	err = os.Rename(ofile.Name(), raftStateFileName)
 	if err != nil {
 		log.Printf("error: %s", err.Error())
@@ -57,10 +56,10 @@ func (ps *Persister) ReadRaftState() []byte {
 	defer ps.mu.Unlock()
 	raftState, err := ReadFromDisk(raftStateFileName)
 	if err == nil {
-		fmt.Printf("No error detected\n")
+		//fmt.Printf("No error detected\n")
 		return raftState
 	} else {
-		fmt.Printf("Error detected: %s\n", err.Error())
+		//fmt.Printf("Error detected: %s\n", err.Error())
 		return nil
 	}
 }
@@ -77,7 +76,7 @@ func (ps *Persister) RaftStateSize() int {
 }
 
 func ReadFromDisk(name string) ([]byte, error) {
-	fmt.Printf("RAFT: DBG: ReadFromDisk called\n")
+	//fmt.Printf("RAFT: DBG: ReadFromDisk called\n")
 	byteSlice := make([]byte, 0)
 	err := error(nil)
 	file, openErr := os.Open(name)
@@ -102,6 +101,6 @@ func ReadFromDisk(name string) ([]byte, error) {
 	}
 
 	file.Close()
-	fmt.Printf("length of byte slice: %d\n", len(byteSlice))
+	//fmt.Printf("length of byte slice: %d\n", len(byteSlice))
 	return byteSlice, nil
 }
