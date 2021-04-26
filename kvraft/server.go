@@ -84,7 +84,6 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 
 	case ReleaseOp:
 		if kv.checkHoldLock(cmd) {
-			fmt.Printf("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n")
 			kv.kvm["lock_"+cmd.Key] = ""
 		} else {
 			return errors.New("not holding lock")
@@ -109,7 +108,7 @@ rerequest:
 		return nil
 	}
 	id := kv.b.sub(msgc)
-	fmt.Printf("KV: %d: Request %s/%s assigned this ID\n", id, args.Key, args.Value)
+	//fmt.Printf("KV: %d: Request %s/%s assigned this ID\n", id, args.Key, args.Value)
 	for !kv.killed() {
 		v := <-msgc
 		// Sanity check: are we the leader?
@@ -126,7 +125,7 @@ rerequest:
 		if v.CommandIndex == idx {
 			cmd := v.Command.(*RequestArgs)
 			if cmd.Seq != args.Seq {
-				fmt.Printf("KV: %d: Re-requesting operation\n", id)
+				//fmt.Printf("KV: %d: Re-requesting operation\n", id)
 				kv.b.unsub(id)
 				kv.ackCh <- true
 				goto rerequest
@@ -153,10 +152,10 @@ rerequest:
 			} else {
 				reply.E = OK
 			}
-			fmt.Printf("KV: %d: Requested operation %s/%s completed\n", id, args.Key, args.Value)
+			//fmt.Printf("KV: %d: Requested operation %s/%s completed\n", id, args.Key, args.Value)
 			return nil
 		} else {
-			fmt.Printf("KV: %d: Wrong index (expected %d, got %d)\n", id, idx, v.CommandIndex)
+			//fmt.Printf("KV: %d: Wrong index (expected %d, got %d)\n", id, idx, v.CommandIndex)
 			kv.ackCh <- true
 		}
 	}
@@ -192,14 +191,14 @@ func (kv *KVServer) manageApplyCh() {
 		// Ensure the commit occurs before others
 		// know about it
 		if v.SnapshotValid {
-			fmt.Printf("KV: SS: Valid snapshot detected\n")
+			//fmt.Printf("KV: SS: Valid snapshot detected\n")
 			kv.mu.Lock()
 			kv.considerApplyMsg(&v)
 			kv.mu.Unlock()
 
 		} else if v.CommandValid {
 			cmd := *v.Command.(*RequestArgs)
-			fmt.Printf("KV: MCH: Got operation %d...\n", v.CommandIndex)
+			//fmt.Printf("KV: MCH: Got operation %d...\n", v.CommandIndex)
 			kv.mu.Lock()
 
 			// If the client sent something before this...
@@ -229,19 +228,19 @@ func (kv *KVServer) manageApplyCh() {
 				}
 			}
 
-			fmt.Printf("KV: DBG: Size of unseen: %d\n", len(kv.unseen))
+			//fmt.Printf("KV: DBG: Size of unseen: %d\n", len(kv.unseen))
 
 			// Has the op been written?
 			if _, ok := kv.unwritten[cmd.Seq]; ok {
-				fmt.Printf("KV: MCH: Writing operation %d\n", v.CommandIndex)
+				//fmt.Printf("KV: MCH: Writing operation %d\n", v.CommandIndex)
 				err := kv.commitOp(cmd)
 				if err != nil {
 					if cmd.Code == AcquireOp {
-						fmt.Printf("KV: LOCK: Note that acquire failed!\n")
+						//fmt.Printf("KV: LOCK: Note that acquire failed!\n")
 						cmd.Code = FailingAcquireOp
 						v.Command = &cmd
 					} else {
-						fmt.Printf("KV: LOCK: Lock was not held when trying to do operation!\n")
+						//fmt.Printf("KV: LOCK: Lock was not held when trying to do operation!\n")
 						cmd.Code = FailingLockedOp
 						v.Command = &cmd
 					}
@@ -314,7 +313,7 @@ func StartKVServer(c *netdrv.NetConfig, me int, persister *raft.Persister, maxra
 	}
 
 	go http.Serve(l, s)
-	fmt.Printf("KV: DBG: SERVING HTTP NOW OVER 1235\n")
+	//fmt.Printf("KV: DBG: SERVING HTTP NOW OVER 1235\n")
 	go kv.manageApplyCh()
 
 	return kv

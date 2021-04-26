@@ -55,6 +55,6 @@ func MkDefaultNetConfig(isRaft bool) *NetConfig {
 			c.Servers[idx] = addr + ":" + fmt.Sprint(defaultKVPort)
 		}
 	}
-	fmt.Printf("CSERVERS: %v\n", c.Servers)
+	// fmt.Printf("CSERVERS: %v\n", c.Servers)
 	return &c
 }

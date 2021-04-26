@@ -48,7 +48,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) 
 	a.Key = key
 	a.Value = value
 
-	fmt.Printf("KV: C: Submitting request %v for %s/%s\n", op, key, value)
+	//fmt.Printf("KV: C: Submitting request %v for %s/%s\n", op, key, value)
 
 	for {
 		r := new(RequestReply)
@@ -80,10 +80,10 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) 
 				a.Value = fmt.Sprintf("%d", time.Now().Unix())
 				goto retry
 			} else if r.E == ErrLockNotHeld {
-				fmt.Printf("KV: C: Failed to execute operation %v, lock not held\n", op)
+				//fmt.Printf("KV: C: Failed to execute operation %v, lock not held\n", op)
 				return "", errors.New("lock not held")
 			} else {
-				fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
+				//fmt.Printf("KV: C: Request %v -> %s/%s finished successfully\n", op, key, value)
 				ck.mu.Lock()
 				ck.lastLdr = l
 				ck.mu.Unlock()
@@ -94,7 +94,7 @@ func (ck *Clerk) doRequest(op OpCode, key string, value string) (string, error) 
 			goto retry
 		}
 	retry:
-		fmt.Printf("KV: C: Retrying operation %s/%s\n", key, value)
+		//fmt.Printf("KV: C: Retrying operation %s/%s\n", key, value)
 		l++
 		if l >= npeers {
 			l = 0

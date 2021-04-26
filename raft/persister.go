@@ -27,12 +27,6 @@ func MakePersister() *Persister {
 	return &Persister{}
 }
 
-func clone(orig []byte) []byte {
-	x := make([]byte, len(orig))
-	copy(x, orig)
-	return x
-}
-
 func (ps *Persister) SaveRaftState(state []byte) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()

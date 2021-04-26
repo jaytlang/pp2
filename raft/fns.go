@@ -1,7 +1,6 @@
 package raft
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"time"
@@ -39,7 +38,7 @@ func (rf *Raft) doInstallSnapshot(index int, term int, snapshot []byte, changeCo
 		rf.appliedIdx = index
 	}
 	rf.persist()
-	fmt.Printf("%d: %d: [NEW] Installed snapshot successfully. New SI is %d\n", rf.me, rf.term, index)
+	//fmt.Printf("%d: %d: [NEW] Installed snapshot successfully. New SI is %d\n", rf.me, rf.term, index)
 }
 
 // Returns true if initial processing succeeded,
@@ -102,7 +101,7 @@ func (rf *Raft) applyOutstanding() {
 				CommandIndex: i,
 			}
 			msgs = append(msgs, a)
-			fmt.Printf("%d: %d: Commiting message %d\n", rf.me, rf.term, i)
+			//fmt.Printf("%d: %d: Commiting message %d\n", rf.me, rf.term, i)
 		}
 	}
 
@@ -180,7 +179,7 @@ func (rf *Raft) runElection() {
 		LastLogTerm:  rf.log[len(rf.log)-1].Term,
 	}
 
-	fmt.Printf("%d: %d: Running election...\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: Running election...\n", rf.me, rf.term)
 
 	for i := range rf.peers {
 		if i == rf.me {
@@ -204,7 +203,7 @@ func (rf *Raft) runElection() {
 			// that's a MASSIVE F in the chat. Tell
 			// the coordinating thread we done here
 			if !rf.msgCommon(rvr.Term) {
-				fmt.Printf("%d: %d: Vote killed\n", rf.me, rf.term)
+				//fmt.Printf("%d: %d: Vote killed\n", rf.me, rf.term)
 				vc.killVote()
 				rf.mu.Unlock()
 				return
@@ -234,7 +233,7 @@ func (rf *Raft) runElection() {
 		// Are we now suddenly a follower? ):
 		voteCount := vc.getVotes()
 		if voteCount < 0 || rf.st == follower {
-			fmt.Printf("%d: %d: Election attempt: became a follower\n", rf.me, rf.term)
+			//fmt.Printf("%d: %d: Election attempt: became a follower\n", rf.me, rf.term)
 			rf.mu.Unlock()
 			return
 		}
@@ -243,7 +242,7 @@ func (rf *Raft) runElection() {
 		// Do we have enough votes to become the leader though?
 		// If so, tell beCandidate that they're done being a candidate
 		if voteCount > len(rf.peers)/2 {
-			fmt.Printf("%d: %d: Election attempt: became leader with %d votes\n", rf.me, rf.term, voteCount)
+			//fmt.Printf("%d: %d: Election attempt: became leader with %d votes\n", rf.me, rf.term, voteCount)
 			rf.st = leader
 			rf.leaderInit()
 			rf.mu.Unlock()
@@ -261,9 +260,7 @@ func (rf *Raft) runElection() {
 	// rf.st will still read candidate, so beCandidate
 	// can re-issue an election. Debug statements require
 	// re-acquisition of the lock
-	rf.mu.Lock()
-	fmt.Printf("%d: %d: Election runtime expired\n", rf.me, rf.term)
-	rf.mu.Unlock()
+	//fmt.Printf("%d: %d: Election runtime expired\n", rf.me, rf.term)
 }
 
 // Running an election
@@ -274,7 +271,7 @@ func (rf *Raft) beCandidate() bool {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	fmt.Printf("%d: %d: Entering candidacy\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: Entering candidacy\n", rf.me, rf.term)
 
 	// Initialize candidacy
 	rf.st = candidate
@@ -297,9 +294,9 @@ func (rf *Raft) beCandidate() bool {
 
 	// If we're here, the election
 	// has a decisive outcome. What is it?
-	fmt.Printf("%d: %d: exiting candidacy\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: exiting candidacy\n", rf.me, rf.term)
 	if rf.st == leader {
-		fmt.Printf("RAFT: New leader: %d/%d\n", rf.me, rf.term)
+		//fmt.Printf("RAFT: New leader: %d/%d\n", rf.me, rf.term)
 		go rf.rvwCommits()
 	}
 	return rf.st == leader
@@ -315,7 +312,7 @@ func (rf *Raft) doHeartbeat() {
 	// and then they'll acquire/demote us to follower if needed.
 	// The running timer loop should figure this out when it's time.
 
-	fmt.Printf("%d: %d: leader is heartbeating with nfi/as %v, %v\n", rf.me, rf.term, rf.nextForServer, rf.atServer)
+	//fmt.Printf("%d: %d: leader is heartbeating with nfi/as %v, %v\n", rf.me, rf.term, rf.nextForServer, rf.atServer)
 	rf.ts = mkTimeMs()
 
 	for i := range rf.peers {
@@ -358,21 +355,21 @@ func (rf *Raft) doHeartbeat() {
 
 				rf.mu.Lock()
 				if !rf.msgCommon(aer.Term) {
-					fmt.Printf("%d: %d: Note: leader is now follower\n", rf.me, rf.term)
+					//fmt.Printf("%d: %d: Note: leader is now follower\n", rf.me, rf.term)
 				} else if !aer.Success {
 					if aer.XTerm > 0 {
 						if ni := rf.firstIndexForTerm(aer.XTerm); ni > 0 {
 							// Case 2: leader has XTerm
-							fmt.Printf("%d: %d: Follower %d wants term %d, we have it at %d of %d\n", rf.me, rf.term, j, aer.XTerm, ni, len(rf.log)-1)
+							//fmt.Printf("%d: %d: Follower %d wants term %d, we have it at %d of %d\n", rf.me, rf.term, j, aer.XTerm, ni, len(rf.log)-1)
 							rf.nextForServer[j] = ni
 						} else {
 							// Case 1: leader doesn't have XTerm
-							fmt.Printf("%d: %d: Follower %d requests index %d for start of term %d, we have %d\n", rf.me, rf.term, j, aer.XIndex, aer.XTerm, len(rf.log)-1)
+							//fmt.Printf("%d: %d: Follower %d requests index %d for start of term %d, we have %d\n", rf.me, rf.term, j, aer.XIndex, aer.XTerm, len(rf.log)-1)
 							rf.nextForServer[j] = aer.XIndex
 						}
 					} else if aer.XLen > 0 {
 						// Case 3: follower's log is too short
-						fmt.Printf("%d: %d: Follower %d log length %d too short, we have %d\n", rf.me, rf.term, j, aer.XLen, len(rf.log)-1)
+						//fmt.Printf("%d: %d: Follower %d log length %d too short, we have %d\n", rf.me, rf.term, j, aer.XLen, len(rf.log)-1)
 						rf.nextForServer[j] = aer.XLen
 					}
 				} else {
@@ -383,7 +380,7 @@ func (rf *Raft) doHeartbeat() {
 			}(i)
 
 		} else {
-			fmt.Printf("%d: %d: [NEW] Don't have entry %d for follower %d, sending snapshot\n", rf.me, rf.term, lli, i)
+			//fmt.Printf("%d: %d: [NEW] Don't have entry %d for follower %d, sending snapshot\n", rf.me, rf.term, lli, i)
 			// Send InstallSnapshot instead
 			isa := InstallSnapshotArgs{
 				Term:              rf.term,
@@ -403,10 +400,10 @@ func (rf *Raft) doHeartbeat() {
 				rf.mu.Lock()
 
 				if !rf.msgCommon(isr.Term) {
-					fmt.Printf("%d: %d: Note: leader is now follower\n", rf.me, rf.term)
+					//fmt.Printf("%d: %d: Note: leader is now follower\n", rf.me, rf.term)
 				} else {
 					rf.nextForServer[j] = isa.LastIncludedIndex + 1
-					fmt.Printf("%d: %d: [NEW] Snapshot sent successfully to %d, next for them is %d\n", rf.me, rf.term, j, rf.nextForServer[j])
+					//fmt.Printf("%d: %d: [NEW] Snapshot sent successfully to %d, next for them is %d\n", rf.me, rf.term, j, rf.nextForServer[j])
 				}
 				rf.mu.Unlock()
 			}(i)
@@ -434,7 +431,7 @@ func (rf *Raft) rvwCommits() {
 		}
 
 		if median > rf.commitIdx && rf.term == rf.log[median].Term {
-			fmt.Printf("%d: %d: leader current median up to %d from %v\n", rf.me, rf.term, median, rf.atServer)
+			//fmt.Printf("%d: %d: leader current median up to %d from %v\n", rf.me, rf.term, median, rf.atServer)
 			rf.commitIdx = median
 			rf.applyOutstanding()
 		}

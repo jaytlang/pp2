@@ -2,7 +2,6 @@ package kvraft
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 
 	"pp2/labgob"
@@ -48,7 +47,7 @@ func (kv *KVServer) takeSnapshot() {
 	// send it along to raft, which will always
 	// succeed
 	kv.rf.Snapshot(kv.topidx, b.Bytes())
-	fmt.Printf("KV: SS: Snapshot taken to index %d\n", kv.topidx)
+	//fmt.Printf("KV: SS: Snapshot taken to index %d\n", kv.topidx)
 }
 
 // Sometimes works, sometimes bails out
@@ -69,9 +68,7 @@ func (kv *KVServer) considerApplyMsg(v *raft.ApplyMsg) {
 		kv.kvm = s.Kvm
 		kv.unseen = s.Unseen
 		kv.unwritten = s.Unwritten
-		fmt.Printf("KV: SS: Snapshot conditionally installed to index %d\n", v.SnapshotIndex)
-	} else {
-		fmt.Printf("KV: SS: Snapshot failed to install to index %d\n", v.SnapshotIndex)
+		//fmt.Printf("KV: SS: Snapshot conditionally installed to index %d\n", v.SnapshotIndex)
 	}
 }
 
@@ -106,13 +103,13 @@ func (kv *KVServer) pullLatestSnapshot(p *raft.Persister) {
 	buf = bytes.NewBuffer(snapshot)
 	d = labgob.NewDecoder(buf)
 	if d.Decode(&s) != nil {
-		fmt.Printf("KV: SS: No snapshot to pull!\n")
+		//fmt.Printf("KV: SS: No snapshot to pull!\n")
 	} else {
 		kv.kvm = s.Kvm
 		kv.unseen = s.Unseen
 		kv.unwritten = s.Unwritten
 		kv.last = s.Last
-		fmt.Printf("KV: SS: Pulled snapshot during restart\n")
+		//fmt.Printf("KV: SS: Pulled snapshot during restart\n")
 	}
 
 }

@@ -167,21 +167,21 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) erro
 	res := rf.msgCommon(args.Term)
 
 	if !res {
-		fmt.Printf("%d: %d: RV new term, resetting my vote\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: RV new term, resetting my vote\n", rf.me, rf.term)
 		rf.votedFor = -1
 		rf.persist()
 	}
 
 	reply.Term = rf.term
 	if args.Term < rf.term {
-		fmt.Printf("%d: %d: Received bad term for requestVote RPC\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Received bad term for requestVote RPC\n", rf.me, rf.term)
 		reply.VoteGranted = false
 		return nil
 	}
 
 	// Next, let's check the log
 	if !rf.otherIsRecent(args.LastLogIndex, args.LastLogTerm) {
-		fmt.Printf("%d: %d: Candidate log is not up to date\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Candidate log is not up to date\n", rf.me, rf.term)
 		reply.VoteGranted = false
 		return nil
 	}
@@ -189,14 +189,14 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) erro
 	// The terms align. Now let's see if we've
 	// already voted for somebody
 	if rf.votedFor == -1 || rf.votedFor == args.CandidateId {
-		fmt.Printf("%d: %d: Received requestVote RPC and granted vote to %d\n", rf.me, rf.term, args.CandidateId)
+		//fmt.Printf("%d: %d: Received requestVote RPC and granted vote to %d\n", rf.me, rf.term, args.CandidateId)
 		rf.ts = mkTimeMs()
 
 		rf.votedFor = args.CandidateId
 		rf.persist()
 		reply.VoteGranted = true
 	} else {
-		fmt.Printf("%d: %d: Declined requestVote RPC for %d\n", rf.me, rf.term, args.CandidateId)
+		//fmt.Printf("%d: %d: Declined requestVote RPC for %d\n", rf.me, rf.term, args.CandidateId)
 		reply.VoteGranted = false
 	}
 	return nil
@@ -210,12 +210,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	res := rf.msgCommon(args.Term)
-
-	// Term check
-	if !res {
-		fmt.Printf("%d: %d: New term and am follower\n", rf.me, rf.term)
-	}
+	rf.msgCommon(args.Term)
 
 	reply.Term = rf.term
 	reply.Success = true
@@ -226,7 +221,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	// Will trigger msgcommon
 	if args.Term < rf.term {
-		fmt.Printf("%d: %d: Got bad heartbeat term\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Got bad heartbeat term\n", rf.me, rf.term)
 		reply.XLen = -1
 		goto fail
 	}
@@ -238,7 +233,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	// If no, this is XLen case. No change necessary
 	if len(rf.log) <= args.LastLogIndex {
 		reply.XLen = len(rf.log)
-		fmt.Printf("%d: %d: No entry at LastLogIndex=%d\n", rf.me, rf.term, args.LastLogIndex)
+		//fmt.Printf("%d: %d: No entry at LastLogIndex=%d\n", rf.me, rf.term, args.LastLogIndex)
 		goto fail
 	}
 
@@ -249,7 +244,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		goto fail
 	}
 	if rf.log[args.LastLogIndex].Term != args.LastLogTerm {
-		fmt.Printf("%d: %d: Wrong term at flwr LastLogIndex\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Wrong term at flwr LastLogIndex\n", rf.me, rf.term)
 		reply.XTerm = rf.log[args.LastLogIndex].Term
 		reply.XIndex = rf.firstIndexForTerm(reply.XTerm)
 		goto fail
@@ -258,33 +253,30 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	// Do we have a log entry at LastLogIndex + 1?
 	// If so, keep going but delete trailing items
 	if len(rf.log) > args.LastLogIndex+1 {
-		fmt.Printf("%d: %d: Overwriting old log entries\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Overwriting old log entries\n", rf.me, rf.term)
 		rf.log = rf.log[:args.LastLogIndex+1]
 		rf.persist()
 	}
 
 	// Append new log entries
 	if len(args.Entries) > 0 {
-		fmt.Printf("%d: %d: Got AppendEntries RPC\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: Got AppendEntries RPC\n", rf.me, rf.term)
 		for i := range args.Entries {
 			newEnt := args.Entries[i]
 			rf.log = append(rf.log, &newEnt)
 		}
 		rf.persist()
-	} else {
-		fmt.Printf("%d: %d: Got heartbeat RPC\n", rf.me, rf.term)
 	}
 
 	// Increment commit index if needed
 	if args.LeaderCommitIdx > rf.commitIdx {
-		oldCommitIdx := rf.commitIdx
 		lastEnt := len(rf.log) - 1
 		if lastEnt < args.LeaderCommitIdx {
 			rf.commitIdx = lastEnt
 		} else {
 			rf.commitIdx = args.LeaderCommitIdx
 		}
-		fmt.Printf("%d: %d: Flwr committed new entries to index %d from %d\n", rf.me, rf.term, rf.commitIdx, oldCommitIdx)
+		//fmt.Printf("%d: %d: Flwr committed new entries to index %d from %d\n", rf.me, rf.term, rf.commitIdx, oldCommitIdx)
 		rf.applyOutstanding()
 	}
 
@@ -298,15 +290,12 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 	rf.mu.Lock()
 
 	// If msgTerm is GREATER than our term, fall in line
-	res := rf.msgCommon(args.Term)
-	if !res {
-		fmt.Printf("%d: %d: SS: [NEW] IS new term, fell into line\n", rf.me, rf.term)
-	}
+	rf.msgCommon(args.Term)
 
 	// If msgTerm is LESS than our term, reply immediately to update the "leader"
 	reply.Term = rf.term
 	if args.Term < rf.term {
-		fmt.Printf("%d: %d: SS: [NEW] Received bad term for IS RPC\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: SS: [NEW] Received bad term for IS RPC\n", rf.me, rf.term)
 		rf.mu.Unlock()
 		return nil
 	}
@@ -316,7 +305,7 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 	// No need to duplicate logic
 
 	rf.ts = mkTimeMs()
-	fmt.Printf("%d: %d: SS: [NEW] Got IS RPC, installing...\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: SS: [NEW] Got IS RPC, installing...\n", rf.me, rf.term)
 	rf.mu.Unlock()
 	a := ApplyMsg{
 		SnapshotValid: true,
@@ -435,7 +424,7 @@ func Make(c *netdrv.NetConfig, me int,
 	rf.Persister = persister
 	rf.me = me
 	rf.c = c
-	fmt.Printf("%d: X: Raft server is coming online\n", rf.me)
+	//fmt.Printf("%d: X: Raft server is coming online\n", rf.me)
 
 	// 2A initialization
 	rf.term = 0
@@ -470,7 +459,7 @@ func Make(c *netdrv.NetConfig, me int,
 	go http.Serve(l, s)
 	rf.peers = c.DialAll()
 
-	fmt.Printf("%d: %d: Raft server is up and running\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: Raft server is up and running\n", rf.me, rf.term)
 	go rf.disambiguator()
 	go rf.ticker()
 
@@ -488,7 +477,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	n := LogEntry{Term: rf.term, Cmd: command}
 	rf.log = append(rf.log, &n)
 	rf.persist()
-	fmt.Printf("%d: %d: Writing new log entry for idx %v\n", rf.me, rf.term, len(rf.log)-1)
+	//fmt.Printf("%d: %d: Writing new log entry for idx %v\n", rf.me, rf.term, len(rf.log)-1)
 
 	expectIdx := len(rf.log) - 1
 
@@ -554,7 +543,7 @@ func (rf *Raft) readPersist(data []byte) {
 		log.Fatal("Erroneous decode")
 	}
 
-	fmt.Printf("%d: %d: [NEW] Read state. Log has valid entries from %d-%d\n", rf.me, rf.term, rf.snapshotIndex, len(rf.log)-1)
+	//fmt.Printf("%d: %d: [NEW] Read state. Log has valid entries from %d-%d\n", rf.me, rf.term, rf.snapshotIndex, len(rf.log)-1)
 }
 
 // A service wants to switch to snapshot.  Only do so if Raft hasn't
@@ -566,11 +555,11 @@ func (rf *Raft) CondInstallSnapshot(lastIncludedTerm int, lastIncludedIndex int,
 	// Verify we aren't installing anything stale. If the snapshot is
 	// not at least as recent as we are, fail out
 	if !rf.otherIsRecent(lastIncludedIndex, lastIncludedTerm) {
-		fmt.Printf("%d: %d: [NEW] Attempted to install stale snapshot\n", rf.me, rf.term)
+		//fmt.Printf("%d: %d: [NEW] Attempted to install stale snapshot\n", rf.me, rf.term)
 		return false
 	}
 
-	fmt.Printf("%d: %d: [NEW] Conditionally installing snapshot...\n", rf.me, rf.term)
+	//fmt.Printf("%d: %d: [NEW] Conditionally installing snapshot...\n", rf.me, rf.term)
 	rf.doInstallSnapshot(lastIncludedIndex, lastIncludedTerm, snapshot, true)
 	return true
 }
