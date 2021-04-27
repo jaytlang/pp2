@@ -124,3 +124,8 @@ func (ck *Clerk) Release(lockk string) error {
 	_, err := ck.doRequest(ReleaseOp, lockk, "")
 	return err
 }
+
+func (ck *Clerk) Renew(lockk string) error {
+	_, err := ck.doRequest(RenewOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
+	return err
+}

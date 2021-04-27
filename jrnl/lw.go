@@ -26,6 +26,7 @@ func AtomicWrite(blks []*bio.Block) error {
 
 	lbn := getLogSegmentStart(blkSeg)
 	for i, blk := range blks {
+	retry:
 		lb := parseLb(bio.Bget(lbn))
 
 		lb.last = false
@@ -36,7 +37,11 @@ func AtomicWrite(blks []*bio.Block) error {
 		lb.rdata = blk.Data
 
 		nlb := flattenLb(lb)
-		nlb.Bpush()
+		err := nlb.Bpush()
+		if err != bio.OK {
+			goto retry
+		}
+
 		nlb.Brelse()
 		lbn++
 	}

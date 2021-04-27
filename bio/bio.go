@@ -67,6 +67,16 @@ func (b *Block) Bpush() BioError {
 	return OK
 }
 
+func (b *Block) Brenew() BioError {
+	nstr := fmt.Sprintf("%d", b.Nr)
+	err := dsk.Renew(nstr)
+	if err != nil {
+		log.Print("warning: renew called without lock")
+		return ErrNoLock
+	}
+	return OK
+}
+
 func (b *Block) Brelse() BioError {
 	nstr := fmt.Sprintf("%d", b.Nr)
 	err := dsk.Release(nstr)

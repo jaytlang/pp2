@@ -19,6 +19,7 @@ const (
 	AppendOp
 	AcquireOp
 	ReleaseOp
+	RenewOp
 	FailingAcquireOp
 	FailingLockedOp
 )

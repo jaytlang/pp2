@@ -119,6 +119,27 @@ func runCli() {
 			case bio.ErrNoLock:
 				fmt.Printf("lock lease expired\n")
 			}
+		case "renew":
+			if len(i) != 2 {
+				goto badcmd
+			}
+
+			nr, err := strconv.ParseUint(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			blk := &bio.Block{
+				Nr: uint(nr),
+			}
+
+			berr := blk.Brenew()
+			switch berr {
+			case bio.OK:
+				fmt.Printf("lock on block %s renewed\n", i[1])
+			case bio.ErrNoLock:
+				fmt.Printf("lock lease expired")
+			}
 		}
 		continue
 

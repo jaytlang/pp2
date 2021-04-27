@@ -6,11 +6,15 @@ import (
 )
 
 func InitSb() {
+retry:
 	sb := parseSb(bio.Bget(sbNr))
 	nsb := flattenSb(sb)
 
 	if sb.commit > 0 {
-		resurrect(sb)
+		err := resurrect(sb)
+		if err != nil {
+			goto retry
+		}
 		goto done
 	}
 
@@ -22,7 +26,11 @@ func InitSb() {
 	sb.commit = 0
 
 	nsb = flattenSb(sb)
-	nsb.Bpush()
+	if nsb.Bpush() != bio.OK {
+		// Just goto retry...not
+		// much else we can really do
+		goto retry
+	}
 
 done:
 	nsb.Brelse()
@@ -56,7 +64,10 @@ start:
 done:
 	sb.cnt++
 	nsb := flattenSb(sb)
-	nsb.Bpush()
+	err := nsb.Bpush()
+	if err != bio.OK {
+		goto start
+	}
 	nsb.Brelse()
 
 	fmt.Printf("Began transaction in log segment %d\n", res)
@@ -64,15 +75,22 @@ done:
 }
 
 func endTransaction() {
+retry:
 	sb := parseSb(bio.Bget(sbNr))
 	sb.cnt--
 	fmt.Printf("Finished a transaction\n")
 
 	if sb.cnt == 0 {
 		fmt.Printf("Outstanding transactions to zero, committing...")
-		commit(sb)
+		err := commit(sb)
+		if err != nil {
+			goto retry
+		}
 	} else {
-		flattenSb(sb).Bpush()
+		err := flattenSb(sb).Bpush()
+		if err != bio.OK {
+			goto retry
+		}
 	}
 	flattenSb(sb).Brelse()
 }

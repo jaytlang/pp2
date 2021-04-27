@@ -88,6 +88,12 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		} else {
 			return errors.New("not holding lock")
 		}
+	case RenewOp:
+		if kv.checkHoldLock(cmd) {
+			kv.kvm["lock_"+cmd.Key] = fmt.Sprintf("%d/%s", cmd.ClientId, cmd.Value)
+		} else {
+			return errors.New("not holding lock")
+		}
 	}
 	return nil
 }
