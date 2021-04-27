@@ -39,7 +39,7 @@ func runCli() {
 
 			for nr := uint64(base); nr < base+qty; nr++ {
 				blk := bio.Bget(uint(nr))
-				fmt.Printf("%s -> %s\n", blk.Nr, blk.Data)
+				fmt.Printf("%d -> %s\n", blk.Nr, blk.Data)
 				blk.Brelse()
 			}
 

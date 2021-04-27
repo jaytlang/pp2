@@ -42,6 +42,7 @@ func AtomicWrite(blks []*bio.Block) error {
 			goto retry
 		}
 		nlb.Brelse()
+		lbn++
 	}
 
 	fmt.Printf("Wrote %d blocks to log segment %d\n", len(blks), blkSeg)

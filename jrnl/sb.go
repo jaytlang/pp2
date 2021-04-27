@@ -7,7 +7,7 @@ import (
 
 func InitSb() {
 	sb := parseSb(bio.Bget(sbNr))
-	var nsb *bio.Block
+	nsb := flattenSb(sb)
 
 	if sb.commit > 0 {
 		resurrect(sb)
