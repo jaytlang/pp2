@@ -38,7 +38,6 @@ func beginTransaction() uint {
 	var res uint
 start:
 	sb := parseSb(bio.Bget(sbNr))
-	sb.cnt++
 	for i, c := range sb.bitmap {
 		if c == '0' {
 			ob := []rune(sb.bitmap)
