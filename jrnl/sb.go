@@ -68,10 +68,11 @@ func endTransaction() {
 	sb.cnt--
 	fmt.Printf("Finished a transaction\n")
 
-	// TODO
 	if sb.cnt == 0 {
 		fmt.Printf("Outstanding transactions to zero, committing...")
 		commit(sb)
+	} else {
+		flattenSb(sb).Bpush()
 	}
 	flattenSb(sb).Brelse()
 }
