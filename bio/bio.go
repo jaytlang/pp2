@@ -14,7 +14,7 @@ type Block struct {
 
 type BioError byte
 
-const blockSize = 4096
+// const blockSize = 4096
 
 const (
 	OK BioError = iota
@@ -54,9 +54,11 @@ retry:
 func (b *Block) Bpush() BioError {
 	nstr := fmt.Sprintf("%d", b.Nr)
 
-	if len(b.Data) > blockSize {
-		return ErrBadSize
-	}
+	/*
+		if len(b.Data) > blockSize {
+			return ErrBadSize
+		}
+	*/
 
 	err := dsk.Put(nstr, b.Data)
 	if err != nil {

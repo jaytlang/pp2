@@ -6,12 +6,17 @@ import (
 	"log"
 	"os"
 	"pp2/bio"
+	"pp2/jrnl"
 	"pp2/kvraft"
 	"pp2/netdrv"
 	"pp2/raft"
 	"strconv"
 	"strings"
 )
+
+// CHANGEME for testing purposes
+// at compile time
+const base = 10000000
 
 func runCli() {
 	rdr := bufio.NewReader(os.Stdin)
@@ -22,6 +27,40 @@ func runCli() {
 		i := strings.Split(ri, " ")
 
 		switch i[0] {
+		case "aread":
+			if len(i) != 2 {
+				goto badcmd
+			}
+
+			qty, err := strconv.ParseUint(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			for nr := uint64(base); nr < base+qty; nr++ {
+				blk := bio.Bget(uint(nr))
+				fmt.Printf("%s -> %s\n", i[1], blk.Data)
+				blk.Brelse()
+			}
+
+		case "awrite":
+			if len(i) < 2 {
+				goto badcmd
+			}
+
+			blks := make([]*bio.Block, 0)
+			for msg := uint(1); msg < uint(len(i)); msg++ {
+				blks = append(blks, &bio.Block{
+					Nr:   uint(base) + msg - 1,
+					Data: i[msg],
+				})
+			}
+			err := jrnl.AtomicWrite(blks)
+			if err != nil {
+				goto badcmd
+			}
+			fmt.Printf("Atomic write complete\n")
+
 		case "get":
 			if len(i) != 2 {
 				goto badcmd
@@ -104,7 +143,9 @@ func main() {
 
 	if a[1] == "client" {
 		bio.Binit()
+		jrnl.InitSb()
 		runCli()
+
 	} else {
 		rc := netdrv.MkDefaultNetConfig(true)
 
