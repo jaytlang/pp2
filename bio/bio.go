@@ -2,11 +2,14 @@ package bio
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"pp2/kvraft"
 	"pp2/netdrv"
+	"time"
 )
 
+// Data is now a tmp file name
 type Block struct {
 	Nr   uint
 	Data string
@@ -38,11 +41,21 @@ func Bget(nr uint) *Block {
 
 retry:
 	dsk.Acquire(nstr)
-	data, err := dsk.Get(nstr)
+	// data (now _) is not actually data anymore
+	_, err := dsk.Get(nstr)
 	if err != nil {
 		log.Print("Warning: single operation too slow for lock lease")
 		goto retry
 	}
+	// XXX: API for blocks should change when this happens
+	// Is there a check if key doesn't exist?
+	dbytes, err := ioutil.ReadFile(nstr)
+	if err != nil {
+		fmt.Println("Fail to read block from file")
+		panic(err)
+	}
+	data := fmt.Sprint(string(dbytes))
+
 	return &Block{
 		Nr:   nr,
 		Data: data,
@@ -60,7 +73,16 @@ func (b *Block) Bpush() BioError {
 		}
 	*/
 
-	err := dsk.Put(nstr, b.Data)
+	asbytes := []byte(b.Data)
+	err := ioutil.WriteFile(nstr, asbytes, 0777)
+	if err != nil {
+		fmt.Println("Fail to write block to file")
+		panic(err)
+	}
+
+	// XXX: API for blocks should change when this happens
+	// Right now I am just doing timestamps for this
+	err = dsk.Put(nstr, fmt.Sprintf("%d", time.Now().Unix()))
 	if err != nil {
 		return ErrNoLock
 	}
