@@ -46,6 +46,10 @@ func beginTransaction() uint {
 	var res uint
 start:
 	sb := parseSb(bio.Bget(sbNr))
+	if sb.commit > 0 {
+		flattenSb(sb).Brelse()
+		goto start
+	}
 	for i, c := range sb.bitmap {
 		if c == '0' {
 			ob := []rune(sb.bitmap)
@@ -77,6 +81,10 @@ done:
 func endTransaction() {
 retry:
 	sb := parseSb(bio.Bget(sbNr))
+	if sb.commit > 0 {
+		flattenSb(sb).Brelse()
+		goto retry
+	}
 	sb.cnt--
 	fmt.Printf("Finished a transaction\n")
 
