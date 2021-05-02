@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"pp2/kvraft"
 	"pp2/netdrv"
 	"time"
@@ -48,11 +49,17 @@ retry:
 		goto retry
 	}
 	// XXX: API for blocks should change when this happens
-	// Is there a check if key doesn't exist?
 	dbytes, err := ioutil.ReadFile(nstr)
 	if err != nil {
-		fmt.Println("Fail to read block from file")
-		panic(err)
+    fmt.Println("Fail to read block from file: creating new block")
+    _, err := os.Create(nstr)
+    if err != nil {
+      panic("Fail to create empty file")
+    }
+    return &Block {
+      Nr: nr,
+      Data: "",
+    }
 	}
 	data := fmt.Sprint(string(dbytes))
 
