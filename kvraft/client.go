@@ -129,3 +129,12 @@ func (ck *Clerk) Renew(lockk string) error {
 	_, err := ck.doRequest(RenewOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
 	return err
 }
+
+func (ck *Clerk) WriteToFile(lockk string, value string) error {
+	_, err := ck.doRequest(WriteToFileOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
+  return err
+}
+
+func (ck *Clerk) ReadFromFile(key string) (string, error) {
+	return ck.doRequest(ReadFromFileOp, key, "")
+}

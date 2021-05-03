@@ -22,6 +22,8 @@ const (
 	RenewOp
 	FailingAcquireOp
 	FailingLockedOp
+  WriteToFileOp
+  ReadFromFileOp
 )
 
 type RequestArgs struct {

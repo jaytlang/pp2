@@ -3,10 +3,12 @@ package kvraft
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/rpc"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -94,6 +96,29 @@ func (kv *KVServer) commitOp(cmd RequestArgs) error {
 		} else {
 			return errors.New("not holding lock")
 		}
+  case WriteToFileOp:
+    if kv.checkHoldLock(cmd) {
+      asbytes := []byte(cmd.Value)
+      err := ioutil.WriteFile(cmd.Key, asbytes, 0777)
+      if err != nil {
+        fmt.Println("Fail to write block to file")
+        panic(err)
+      }
+    } else {
+      return errors.New("not holding lock")
+    }
+  case ReadFromFileOp:
+    if kv.checkHoldLock(cmd) {
+      if _, err := os.Stat(cmd.Key); os.IsNotExist(err) {
+        fmt.Println("Fail to read block from file: creating new block")
+        _, err := os.Create(cmd.Key)
+        if err != nil {
+          panic("Fail to create empty file")
+        }
+      }
+    } else {
+      return errors.New("not holding lock")
+    }
 	}
 	return nil
 }
@@ -155,7 +180,15 @@ rerequest:
 				} else {
 					reply.E = ErrNoKey
 				}
-			} else {
+			} else if args.Code == ReadFromFileOp {
+        dbytes, err := ioutil.ReadFile(cmd.Key)
+        if err != nil {
+          panic("Fail to read from file")
+        }
+        data := string(dbytes)
+        reply.Value = data
+        reply.E = OK
+      } else {
 				reply.E = OK
 			}
 			//fmt.Printf("KV: %d: Requested operation %s/%s completed\n", id, args.Key, args.Value)

@@ -38,7 +38,7 @@ func Bget(nr uint) *Block {
 
 retry:
 	dsk.Acquire(nstr)
-	data, err := dsk.Get(nstr)
+	data, err := dsk.ReadFromFile(nstr)
 	if err != nil {
 		log.Print("Warning: single operation too slow for lock lease")
 		goto retry
@@ -60,7 +60,7 @@ func (b *Block) Bpush() BioError {
 		}
 	*/
 
-	err := dsk.Put(nstr, b.Data)
+	err := dsk.WriteToFile(nstr, b.Data)
 	if err != nil {
 		return ErrNoLock
 	}
