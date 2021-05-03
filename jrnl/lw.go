@@ -42,6 +42,7 @@ func AtomicWrite(blks []*bio.Block) error {
 			goto retry
 		}
 
+		nlb.Brelse()
 		lbn++
 	}
 
