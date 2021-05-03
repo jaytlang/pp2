@@ -132,7 +132,7 @@ func (ck *Clerk) Renew(lockk string) error {
 
 func (ck *Clerk) WriteToFile(key string, value string) error {
 	_, err := ck.doRequest(WriteToFileOp, key, value)
-  return err
+	return err
 }
 
 func (ck *Clerk) ReadFromFile(key string) (string, error) {
