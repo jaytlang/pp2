@@ -39,6 +39,11 @@ type DirEnt struct {
 	Inodenum uint16
 }
 
+var rootDirEnt = &DirEnt{
+	Filename: "/",
+	Inodenum: rootInum,
+}
+
 func Alloci(mode IType) *Inode {
 	for i := firstBlkAddr; i < firstBlkAddr+inodeNum; i++ {
 		blk := bio.Bget(uint(i))
@@ -50,12 +55,12 @@ func Alloci(mode IType) *Inode {
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
-			blk.Data = ni.encode()
+			blk.Data = ni.Encode()
 			jrnl.AtomicWrite([]*bio.Block{blk})
 			return ni
 
 		}
-		ni := decode(blk.Data)
+		ni := IDecode(blk.Data)
 		if ni.Refcnt == 0 {
 			ni = &Inode{
 				Serialnum: uint(i) - firstBlkAddr,
@@ -64,7 +69,7 @@ func Alloci(mode IType) *Inode {
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
-			blk.Data = ni.encode()
+			blk.Data = ni.Encode()
 			jrnl.AtomicWrite([]*bio.Block{blk})
 			return ni
 		}
@@ -77,7 +82,7 @@ func (i *Inode) Relse() {
 	actual := i.Serialnum + firstBlkAddr
 	b := &bio.Block{
 		Nr:   actual,
-		Data: i.encode(),
+		Data: i.Encode(),
 	}
 	b.Brelse()
 }
@@ -91,7 +96,7 @@ func Geti(id uint) *Inode {
 	if blk.Data == "" {
 		log.Fatal("empty Inode")
 	} else {
-		ni := decode(blk.Data)
+		ni := IDecode(blk.Data)
 		return ni
 	}
 
@@ -106,7 +111,7 @@ func (i *Inode) Free() {
 	i.Refcnt--
 	b := &bio.Block{
 		Nr:   i.Serialnum + firstBlkAddr,
-		Data: i.encode(),
+		Data: i.Encode(),
 	}
 	jrnl.AtomicWrite([]*bio.Block{b})
 	i.Relse()
@@ -115,7 +120,7 @@ func (i *Inode) Free() {
 func (i *Inode) Renew() error {
 	b := &bio.Block{
 		Nr:   i.Serialnum + firstBlkAddr,
-		Data: i.encode(),
+		Data: i.Encode(),
 	}
 	err := b.Brenew()
 	if err != bio.OK {
