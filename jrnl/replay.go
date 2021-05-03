@@ -97,16 +97,16 @@ func replayLogSegment(sgmt uint) {
 	retry:
 		lb := parseLb(bio.Bget(lbn))
 
-		db := bio.Bget(lb.rnr)
-		db.Data = lb.rdata
+		db := &bio.Block{
+			Nr:   lb.rnr,
+			Data: lb.rdata,
+		}
 
 		flattenLb(lb).Brelse()
 		err := db.Bpush()
 		if err != bio.OK {
 			goto retry
 		}
-
-		db.Brelse()
 
 		if lb.last {
 			break
