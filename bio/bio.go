@@ -14,7 +14,7 @@ type Block struct {
 
 type BioError byte
 
-// const blockSize = 4096
+const BlockSize = 4096
 
 const (
 	OK BioError = iota

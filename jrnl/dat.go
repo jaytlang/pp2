@@ -27,3 +27,5 @@ const sbNr = 2
 const logStart = 3
 const blkPerSys = 100
 const sysPerLog = 1000
+
+const EndJrnl = blkPerSys*sysPerLog + 3

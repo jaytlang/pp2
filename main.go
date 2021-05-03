@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"pp2/balloc"
 	"pp2/bio"
+	"pp2/inode"
 	"pp2/jrnl"
 	"pp2/kvraft"
 	"pp2/netdrv"
@@ -140,6 +142,27 @@ func runCli() {
 			case bio.ErrNoLock:
 				fmt.Printf("lock lease expired")
 			}
+
+		case "balloc":
+			if len(i) != 1 {
+				goto badcmd
+			}
+
+			res := balloc.AllocBlock()
+			fmt.Printf("Got block %d\n", res)
+
+		case "brelse":
+			if len(i) != 2 {
+				goto badcmd
+			}
+
+			nr, err := strconv.ParseUint(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			balloc.RelseBlock(uint(nr))
+			fmt.Printf("block freed")
 		}
 		continue
 
@@ -166,6 +189,7 @@ func main() {
 		bio.Binit()
 		jrnl.InitSb()
 		runCli()
+		inode.InodeInit()
 
 	} else {
 		rc := netdrv.MkDefaultNetConfig(true)
