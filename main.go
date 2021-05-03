@@ -162,7 +162,7 @@ func runCli() {
 			}
 
 			balloc.RelseBlock(uint(nr))
-			fmt.Printf("block freed")
+			fmt.Printf("block freed\n")
 		}
 		continue
 
