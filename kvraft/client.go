@@ -130,8 +130,8 @@ func (ck *Clerk) Renew(lockk string) error {
 	return err
 }
 
-func (ck *Clerk) WriteToFile(lockk string, value string) error {
-	_, err := ck.doRequest(WriteToFileOp, lockk, fmt.Sprintf("%d", time.Now().Unix()))
+func (ck *Clerk) WriteToFile(key string, value string) error {
+	_, err := ck.doRequest(WriteToFileOp, key, value)
   return err
 }
 
