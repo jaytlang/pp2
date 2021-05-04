@@ -41,6 +41,13 @@ func (n *NameServer) Request(args *NsRqArgs, reply *NsRpArgs) error {
 	defer n.lock.Unlock()
 
 	if args.Register {
+		for n, a := range n.names {
+			if a == args.Address {
+				reply.OK = true
+				reply.Name = n
+				return nil
+			}
+		}
 		nn := n.mkName()
 		n.names[nn] = args.Address
 		reply.OK = true
