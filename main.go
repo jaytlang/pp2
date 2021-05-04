@@ -131,24 +131,16 @@ func runCli() {
 			}
 
 		case "balloc":
-			if !inTxn {
-				fmt.Printf("not in transaction\n")
-				continue
-			}
 			if len(i) != 1 {
 				goto badcmd
 			}
 
-			res := balloc.AllocBlock(t)
+			res := balloc.AllocBlock()
 			fmt.Printf("Got block %d\n", res)
 
 		case "brelse":
 			if len(i) != 2 {
 				goto badcmd
-			}
-			if !inTxn {
-				fmt.Printf("not in transaction\n")
-				continue
 			}
 
 			nr, err := strconv.ParseUint(i[1], 10, 64)
@@ -156,7 +148,7 @@ func runCli() {
 				goto badcmd
 			}
 
-			balloc.RelseBlock(t, uint(nr))
+			balloc.RelseBlock(uint(nr))
 			fmt.Printf("block freed\n")
 		}
 		continue
