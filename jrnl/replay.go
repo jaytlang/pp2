@@ -77,12 +77,9 @@ func replay(sb *logSB) error {
 	// Replay every valid log segment
 	for i, v := range sb.bitmap {
 		if v == '1' {
-			replayLogSegment(uint(i))
-			err := flattenSb(sb).Brenew()
-			if err != bio.OK {
-				// The log hasn't been reset, but
-				// we did commit. We lost the sb halfway
-				// though, that's all. Return error.
+			err := replayLogSegment(sb, uint(i))
+			// Error is nil -> we lost the superblock!
+			if err != nil {
 				return errors.New("lock lease expired")
 			}
 		}
@@ -90,13 +87,29 @@ func replay(sb *logSB) error {
 	return nil
 }
 
-func replayLogSegment(sgmt uint) {
+func replayLogSegment(sb *logSB, sgmt uint) error {
 	lbn := getLogSegmentStart(sgmt)
 	fmt.Printf("Replaying block segment %d to disk\n", sgmt)
 	for {
 	retry:
 		lb := parseLb(bio.Bget(lbn))
 
+		// Somebody else might *get* this block,
+		// but nobody else will be able to write to it
+		// because they don't hold the lock on the sb
+		// and if the sb lock was lost, the log would
+		// replay anyway. The loss of this lock either implies
+		//
+		// -> somebody else wanted to do a read. That's fine, we can
+		// take it back from them at our leisure and update it.
+		//
+		// -> we lost the sb lock and someone else is committing
+		// over us simultaneously, e.g. we are racing. Brenew()
+		// will thus fail when we exit out.
+		//
+		// Solution: if this block fails, set a flag. If brenew() comes
+		// back badly, we can assume the sb lock is gone. Otherwise, we
+		// try again.
 		db := &bio.Block{
 			Nr:   lb.rnr,
 			Data: lb.rdata,
@@ -104,7 +117,11 @@ func replayLogSegment(sgmt uint) {
 
 		flattenLb(lb).Brelse()
 		err := db.Bpush()
-		if err != bio.OK {
+		berr := flattenSb(sb).Brenew()
+		if berr != bio.OK {
+			return errors.New("lost the superblock lock")
+		} else if err != bio.OK {
+			bio.Bget(lb.rnr)
 			goto retry
 		}
 
@@ -113,4 +130,5 @@ func replayLogSegment(sgmt uint) {
 		}
 		lbn++
 	}
+	return nil
 }

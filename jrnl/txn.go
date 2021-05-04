@@ -115,6 +115,8 @@ retry:
 		fmt.Printf("Outstanding transactions to zero, committing...")
 		err := commit(sb)
 		if err != nil {
+			// Lost the superblock halfway through a commit.
+			// We can go get it and see if it still needs committing.
 			goto retry
 		}
 	} else {
