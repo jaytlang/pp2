@@ -3,6 +3,7 @@ package balloc
 import (
 	"pp2/bio"
 	"pp2/inode"
+	"pp2/jrnl"
 )
 
 const bitmapBlock = inode.EndInode + 1
@@ -25,14 +26,12 @@ func clearBit(b bitmap, nr uint) {
 	b[nr] = 0x0
 }
 
-func updateAndRelseBitmap(b bitmap) {
+func updateAndRelseBitmap(t *jrnl.TxnHandle, b bitmap) {
 	blk := bio.Block{
 		Nr:   bitmapBlock,
 		Data: string(b),
 	}
 
-	/*
-		jrnl.AtomicWrite([]*bio.Block{&blk})
-	*/
+	t.WriteBlock(&blk)
 	blk.Brelse()
 }

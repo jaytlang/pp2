@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"pp2/balloc"
 	"pp2/bio"
 	"pp2/inode"
 	"pp2/jrnl"
@@ -77,6 +78,10 @@ func runCli() {
 			}
 
 		case "end":
+			if !inTxn {
+				fmt.Printf("not in transaction\n")
+				continue
+			}
 			t.EndTransaction()
 			t = nil
 			inTxn = false
@@ -125,28 +130,34 @@ func runCli() {
 				fmt.Printf("lock lease expired")
 			}
 
-			/*
-				case "balloc":
-					if len(i) != 1 {
-						goto badcmd
-					}
+		case "balloc":
+			if !inTxn {
+				fmt.Printf("not in transaction\n")
+				continue
+			}
+			if len(i) != 1 {
+				goto badcmd
+			}
 
-					res := balloc.AllocBlock()
-					fmt.Printf("Got block %d\n", res)
+			res := balloc.AllocBlock(t)
+			fmt.Printf("Got block %d\n", res)
 
-				case "brelse":
-					if len(i) != 2 {
-						goto badcmd
-					}
+		case "brelse":
+			if len(i) != 2 {
+				goto badcmd
+			}
+			if !inTxn {
+				fmt.Printf("not in transaction\n")
+				continue
+			}
 
-					nr, err := strconv.ParseUint(i[1], 10, 64)
-					if err != nil {
-						goto badcmd
-					}
+			nr, err := strconv.ParseUint(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
 
-					balloc.RelseBlock(uint(nr))
-					fmt.Printf("block freed\n")
-			*/
+			balloc.RelseBlock(t, uint(nr))
+			fmt.Printf("block freed\n")
 		}
 		continue
 
