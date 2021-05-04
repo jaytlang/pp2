@@ -4,16 +4,8 @@ import (
 	"errors"
 )
 
-// In lieu of dynamically updatable configuration,
-// use these lists to set up ncs
-var ipList []string = []string{"10.0.0.198", "10.0.0.187", "10.0.0.129"}
-
-// Update this prior to compilation to
-// set your own IP address
-var myIp = "10.0.0.197"
-
 func (c *NetConfig) GetMe() (int, error) {
-	me := myIp
+	me := getMyIp()
 	if c.IsRaft {
 		me += ":1234"
 	} else {

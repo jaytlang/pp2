@@ -172,27 +172,29 @@ func runCli() {
 }
 
 func printUsageMsgAndDie(err string) {
-	fmt.Printf("Usage: ./pp2 <client | server>\n")
+	fmt.Printf("Usage: ./pp2 <client | server | ns> <nsAddr (localhost if args[1] == 'ns')>\n")
 	fmt.Printf("Error: %s\n", err)
 	os.Exit(1)
 }
 
 func main() {
 	a := os.Args
-	if len(a) != 2 {
+	if len(a) != 3 {
 		printUsageMsgAndDie("invalid number of arguments")
-	} else if a[1] != "client" && a[1] != "server" {
+	} else if a[1] != "client" && a[1] != "server" && a[1] != "ns" {
 		printUsageMsgAndDie("invalid second argument")
 	}
 
-	if a[1] == "client" {
-		bio.Binit()
+	if a[1] == "ns" {
+		netdrv.RunNameserver()
+	} else if a[1] == "client" {
+		bio.Binit(a[2])
 		jrnl.InitSb()
-		runCli()
 		inode.InodeInit()
+		runCli()
 
 	} else {
-		rc := netdrv.MkDefaultNetConfig(true)
+		rc := netdrv.MkDefaultNetConfig(true, true, a[2])
 
 		me, err := rc.GetMe()
 		if err != nil {

@@ -24,8 +24,8 @@ const (
 
 var dsk *kvraft.Clerk
 
-func Binit() {
-	conf := netdrv.MkDefaultNetConfig(false)
+func Binit(nsAddr string) {
+	conf := netdrv.MkDefaultNetConfig(false, false, nsAddr)
 	dsk = kvraft.MakeClerk(conf)
 }
 

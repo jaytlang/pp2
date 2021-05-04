@@ -36,15 +36,28 @@ func (c *NetConfig) DialAll() []*rpc.Client {
 	return l
 }
 
-func MkDefaultNetConfig(isRaft bool) *NetConfig {
+const nServers = 3
+
+func MkDefaultNetConfig(isRaft bool, register bool, nsAddr string) *NetConfig {
 	c := NetConfig{
 		KVPort:   defaultKVPort,
 		RaftPort: defaultRFPort,
 		IsRaft:   isRaft,
+		Servers:  []string{},
 	}
 
-	c.Servers = []string{}
-	c.Servers = append(c.Servers, ipList...)
+	// Register myself
+	var me int
+	if register {
+		me = registerName(nsAddr)
+	}
+	for i := 0; i < nServers; i++ {
+		if i == me && register {
+			c.Servers = append(c.Servers, getMyIp())
+		} else {
+			c.Servers = append(c.Servers, getName(nsAddr, i))
+		}
+	}
 
 	if isRaft {
 		for idx, addr := range c.Servers {
