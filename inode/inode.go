@@ -56,7 +56,7 @@ func Alloci(mode IType) *Inode {
 				Mode:      mode,
 			}
 			blk.Data = ni.Encode()
-			jrnl.AtomicWrite([]*bio.Block{blk})
+			// jrnl.AtomicWrite([]*bio.Block{blk})
 			return ni
 
 		}
@@ -70,7 +70,7 @@ func Alloci(mode IType) *Inode {
 				Mode:      mode,
 			}
 			blk.Data = ni.Encode()
-			jrnl.AtomicWrite([]*bio.Block{blk})
+			// jrnl.AtomicWrite([]*bio.Block{blk})
 			return ni
 		}
 	}
@@ -103,6 +103,8 @@ func Geti(id uint) *Inode {
 	return nil
 }
 
+/*
+
 func (i *Inode) Free() {
 	if i.Refcnt == 0 {
 		log.Fatal("double free")
@@ -117,6 +119,7 @@ func (i *Inode) Free() {
 	i.Relse()
 }
 
+*/
 func (i *Inode) Renew() error {
 	b := &bio.Block{
 		Nr:   i.Serialnum + firstBlkAddr,
