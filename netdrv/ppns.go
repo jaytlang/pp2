@@ -60,6 +60,7 @@ func (n *NameServer) Request(args *NsRqArgs, reply *NsRpArgs) error {
 
 func RunNameserver() {
 	n := new(NameServer)
+	n.names = make(map[int]string)
 
 	s := rpc.NewServer()
 	s.Register(n)
