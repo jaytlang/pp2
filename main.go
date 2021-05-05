@@ -149,7 +149,7 @@ func runCli() {
 				goto badcmd
 			}
 
-			res := balloc.AllocBlock(t)
+			res, _ := balloc.AllocBlock(t)
 			fmt.Printf("Got block %d\n", res)
 
 		case "brelse":

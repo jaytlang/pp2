@@ -16,12 +16,11 @@ type TxnHandle struct {
 	offset uint
 }
 
-// When you're done with some writes,
-// you shove them all into a list
-// and send it our way. Assumed to be <blkPerSys
-// in length.
-//
-// Can and should be called concurrently.
+// Attempt to write a block to the log.
+// Semantics: will succeed unless blkPerSys exceeded
+// This is highly unlikely, so assume this passes okay
+// It is recommended to hold all blocks you write here,
+// and to keep them through the duration of your log.
 func (t *TxnHandle) WriteBlock(blk *bio.Block) error {
 	if t.offset >= blkPerSys {
 		return errors.New("too many blocks written")
@@ -50,7 +49,7 @@ retry:
 // metadata to ensure consistency and
 // returns the syscall log subset in which
 // this person is to write, NOT the raw
-// block number
+// block number. Will always succeed.
 func BeginTransaction() *TxnHandle {
 	var res uint
 start:
@@ -90,6 +89,9 @@ done:
 	}
 }
 
+// Will always succeed. Might take a while.
+// However, before you call this, ensure you hold
+// all blocks that you touched during the transaction.
 func (t *TxnHandle) EndTransaction(abt bool) {
 markLast:
 	lbn := getLogSegmentStart(t.blkSeg) + t.offset - 1
@@ -149,6 +151,9 @@ retry:
 	flattenSb(sb).Brelse()
 }
 
+// Will always succeed. Might take a while.
+// However, before you call this, ensure you hold
+// all blocks that you touched during the transaction.
 func (t *TxnHandle) AbortTransaction() {
 retry:
 	sb := parseSb(bio.Bget(sbNr))

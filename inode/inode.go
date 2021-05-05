@@ -28,7 +28,6 @@ const (
 type Inode struct {
 	Serialnum uint
 	Refcnt    uint
-	Filesize  uint // # blocks, not bytes
 	Addrs     []uint
 	Mode      IType
 	// timestamp Time
@@ -44,19 +43,22 @@ var rootDirEnt = &DirEnt{
 	Inodenum: rootInum,
 }
 
-func Alloci(mode IType) *Inode {
+// Always succeeds, might take awhile
+func Alloci(t *jrnl.TxnHandle, mode IType) *Inode {
+retry:
 	for i := firstBlkAddr; i < firstBlkAddr+inodeNum; i++ {
 		blk := bio.Bget(uint(i))
 		if blk.Data == "" {
 			ni := &Inode{
 				Serialnum: uint(i) - firstBlkAddr,
 				Refcnt:    1,
-				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			blk.Data = ni.Encode()
-			// jrnl.AtomicWrite([]*bio.Block{blk})
+			if t.WriteBlock(blk) != nil {
+				goto retry
+			}
 			return ni
 
 		}
@@ -65,47 +67,26 @@ func Alloci(mode IType) *Inode {
 			ni = &Inode{
 				Serialnum: uint(i) - firstBlkAddr,
 				Refcnt:    1,
-				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			blk.Data = ni.Encode()
-			// jrnl.AtomicWrite([]*bio.Block{blk})
+			if t.WriteBlock(blk) != nil {
+				goto retry
+			}
 			return ni
 		}
+		blk.Brelse()
 	}
 	log.Fatal("no allocatable Inodes")
+	// Never reached
 	return nil
 }
 
-func (i *Inode) Relse() {
-	actual := i.Serialnum + firstBlkAddr
-	b := &bio.Block{
-		Nr:   actual,
-		Data: i.Encode(),
-	}
-	b.Brelse()
-}
-
-func Geti(id uint) *Inode {
-	if firstBlkAddr < id || id <= firstBlkAddr+inodeNum {
-		log.Fatal("inode id out of range")
-	}
-
-	blk := bio.Bget(id)
-	if blk.Data == "" {
-		log.Fatal("empty Inode")
-	} else {
-		ni := IDecode(blk.Data)
-		return ni
-	}
-
-	return nil
-}
-
-/*
-
-func (i *Inode) Free() {
+// Decrement the refcount on the inode. If it
+// hits zero, further allocs might pick it up.
+// Then, relse. The decrement may fail.
+func (i *Inode) Free(t *jrnl.TxnHandle) error {
 	if i.Refcnt == 0 {
 		log.Fatal("double free")
 	}
@@ -115,11 +96,38 @@ func (i *Inode) Free() {
 		Nr:   i.Serialnum + firstBlkAddr,
 		Data: i.Encode(),
 	}
-	jrnl.AtomicWrite([]*bio.Block{b})
+	if err := t.WriteBlock(b); err != nil {
+		return err
+	}
 	i.Relse()
+	return nil
 }
 
-*/
+// May fail silently (implicit success)
+func (i *Inode) Relse() {
+	actual := i.Serialnum + firstBlkAddr
+	b := &bio.Block{
+		Nr:   actual,
+		Data: i.Encode(),
+	}
+	b.Brelse()
+}
+
+// Always succeeds
+func Geti(id uint) *Inode {
+	if firstBlkAddr < id || id <= firstBlkAddr+inodeNum {
+		log.Fatal("inode id out of range")
+	}
+
+	blk := bio.Bget(id)
+	if blk.Data == "" {
+		log.Fatal("empty Inode")
+	}
+	ni := IDecode(blk.Data)
+	return ni
+}
+
+// May fail if we've lost the lock by this point
 func (i *Inode) Renew() error {
 	b := &bio.Block{
 		Nr:   i.Serialnum + firstBlkAddr,
