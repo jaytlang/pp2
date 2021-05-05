@@ -26,12 +26,16 @@ func clearBit(b bitmap, nr uint) {
 	b[nr] = 0x0
 }
 
-func updateAndRelseBitmap(t *jrnl.TxnHandle, b bitmap) {
+func updateAndRelseBitmap(t *jrnl.TxnHandle, b bitmap) error {
 	blk := bio.Block{
 		Nr:   bitmapBlock,
 		Data: string(b),
 	}
 
-	t.WriteBlock(&blk)
+	err := t.WriteBlock(&blk)
+	if err != nil {
+		return err
+	}
 	blk.Brelse()
+	return nil
 }

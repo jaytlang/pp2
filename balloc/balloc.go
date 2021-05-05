@@ -7,21 +7,24 @@ import (
 
 const startData = bitmapBlock + 1
 
-func AllocBlock(t *jrnl.TxnHandle) uint {
+func AllocBlock(t *jrnl.TxnHandle) (uint, error) {
 	btmp := getBitmap()
 	for i, bit := range btmp {
 		if bit == 0 {
 			setBit(btmp, uint(i))
-			updateAndRelseBitmap(t, btmp)
-			return uint(i) + startData
+			if err := updateAndRelseBitmap(t, btmp); err != nil {
+				return 0, err
+			}
+			return uint(i) + startData, nil
 		}
 	}
 
 	log.Fatal("no blocks to alloc big sad")
-	return 0
+	// Never reached
+	return 0, nil
 }
 
-func RelseBlock(t *jrnl.TxnHandle, bn uint) {
+func RelseBlock(t *jrnl.TxnHandle, bn uint) error {
 	if bn < startData {
 		log.Fatal("illegal block to relse")
 	}
@@ -31,5 +34,5 @@ func RelseBlock(t *jrnl.TxnHandle, bn uint) {
 		log.Fatal("double free in bitmap")
 	}
 	clearBit(btmp, bn)
-	updateAndRelseBitmap(t, btmp)
+	return updateAndRelseBitmap(t, btmp)
 }
