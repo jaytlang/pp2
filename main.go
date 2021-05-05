@@ -87,6 +87,16 @@ func runCli() {
 			inTxn = false
 			fmt.Printf("transaction ended\n")
 
+		case "abort":
+			if !inTxn {
+				fmt.Printf("not in transaction\n")
+				continue
+			}
+			t.AbortTransaction()
+			t = nil
+			inTxn = false
+			fmt.Printf("transaction ended\n")
+
 		case "relse":
 			if len(i) != 2 {
 				goto badcmd
