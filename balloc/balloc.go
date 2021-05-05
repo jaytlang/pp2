@@ -2,16 +2,17 @@ package balloc
 
 import (
 	"log"
+	"pp2/jrnl"
 )
 
 const startData = bitmapBlock + 1
 
-func AllocBlock() uint {
+func AllocBlock(t *jrnl.TxnHandle) uint {
 	btmp := getBitmap()
 	for i, bit := range btmp {
 		if bit == 0 {
 			setBit(btmp, uint(i))
-			updateAndRelseBitmap(btmp)
+			updateAndRelseBitmap(t, btmp)
 			return uint(i) + startData
 		}
 	}
@@ -20,7 +21,7 @@ func AllocBlock() uint {
 	return 0
 }
 
-func RelseBlock(bn uint) {
+func RelseBlock(t *jrnl.TxnHandle, bn uint) {
 	if bn < startData {
 		log.Fatal("illegal block to relse")
 	}
@@ -30,5 +31,5 @@ func RelseBlock(bn uint) {
 		log.Fatal("double free in bitmap")
 	}
 	clearBit(btmp, bn)
-	updateAndRelseBitmap(btmp)
+	updateAndRelseBitmap(t, btmp)
 }
