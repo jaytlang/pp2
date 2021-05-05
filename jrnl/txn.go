@@ -93,6 +93,9 @@ done:
 func (t *TxnHandle) EndTransaction(abt bool) {
 markLast:
 	lbn := getLogSegmentStart(t.blkSeg) + t.offset - 1
+	if t.offset == 0 {
+		lbn++
+	}
 	ilb := parseLb(bio.Bget(lbn))
 	ilb.last = true
 	nlb := flattenLb(ilb)
