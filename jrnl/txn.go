@@ -127,3 +127,23 @@ retry:
 	}
 	flattenSb(sb).Brelse()
 }
+
+func (t *TxnHandle) AbortTransaction() {
+retry:
+	sb := parseSb(bio.Bget(sbNr))
+	if sb.commit > 0 {
+		flattenSb(sb).Brelse()
+		goto retry
+	}
+
+	ob := []rune(sb.bitmap)
+	ob[t.blkSeg] = '0'
+	sb.bitmap = string(ob)
+	sb.cnt--
+
+	nsb := flattenSb(sb)
+	err := nsb.Bpush()
+	if err != bio.OK {
+		goto retry
+	}
+}
