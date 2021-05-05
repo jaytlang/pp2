@@ -90,7 +90,7 @@ done:
 	}
 }
 
-func (t *TxnHandle) EndTransaction() {
+func (t *TxnHandle) EndTransaction(abt bool) {
 markLast:
 	lbn := getLogSegmentStart(t.blkSeg) + t.offset - 1
 	ilb := parseLb(bio.Bget(lbn))
@@ -112,12 +112,30 @@ retry:
 	fmt.Printf("Finished a transaction\n")
 
 	if sb.cnt == 0 {
-		fmt.Printf("Outstanding transactions to zero, committing...")
-		err := commit(sb)
-		if err != nil {
-			// Lost the superblock halfway through a commit.
-			// We can go get it and see if it still needs committing.
-			goto retry
+		fmt.Printf("Outstanding transactions to zero.\n")
+
+		hasValid := false
+		for _, r := range sb.bitmap {
+			if r != '0' {
+				hasValid = true
+				break
+			}
+		}
+
+		if hasValid {
+			fmt.Printf("At least one valid block exists, committing...")
+			err := commit(sb)
+			if err != nil {
+				// Lost the superblock halfway through a commit.
+				// We can go get it and see if it still needs committing.
+				goto retry
+			}
+			fmt.Printf("Committed.\n")
+		} else {
+			err := flattenSb(sb).Bpush()
+			if err != bio.OK {
+				goto retry
+			}
 		}
 	} else {
 		err := flattenSb(sb).Bpush()
@@ -139,11 +157,13 @@ retry:
 	ob := []rune(sb.bitmap)
 	ob[t.blkSeg] = '0'
 	sb.bitmap = string(ob)
-	sb.cnt--
 
 	nsb := flattenSb(sb)
 	err := nsb.Bpush()
 	if err != bio.OK {
 		goto retry
 	}
+
+	nsb.Brelse()
+	t.EndTransaction(true)
 }
