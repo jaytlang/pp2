@@ -10,11 +10,11 @@ import (
 
 const dirDataBlks = 12
 const inDirDataBlks = bio.BlockSize / 8
-const firstBlkAddr = jrnl.EndJrnl + 1
+const firstInodeAddr = jrnl.EndJrnl + 1
 const numInodes = 16384
 const rootInum = 0
 
-const EndInode = firstBlkAddr + numInodes + 1
+const EndInode = firstInodeAddr + numInodes + 1
 
 // maximum filesize is 2.04 mb ((dirdatablks+indirdatablks)*4096 bytes)
 
@@ -47,18 +47,17 @@ var rootDirEnt = &DirEnt{
 // Always succeeds, might take awhile
 func Alloci(t *jrnl.TxnHandle, mode IType) *Inode {
 retry:
-	for i := firstBlkAddr; i < firstBlkAddr+numInodes; i++ {
+	for i := firstInodeAddr; i < firstInodeAddr+numInodes; i++ {
 		blk := bio.Bget(uint(i))
 		if blk.Data == "" {
 			ni := &Inode{
-				Serialnum: uint(i) - firstBlkAddr,
+				Serialnum: uint(i) - firstInodeAddr,
 				Refcnt:    1,
 				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
-			blk.Data = ni.Encode()
-			if t.WriteBlock(blk) != nil {
+			if ni.Write(t) != nil {
 				goto retry
 			}
 			return ni
@@ -67,14 +66,13 @@ retry:
 		ni := IDecode(blk.Data)
 		if ni.Refcnt == 0 {
 			ni = &Inode{
-				Serialnum: uint(i) - firstBlkAddr,
+				Serialnum: uint(i) - firstInodeAddr,
 				Refcnt:    1,
 				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
-			blk.Data = ni.Encode()
-			if t.WriteBlock(blk) != nil {
+			if ni.Write(t) != nil {
 				goto retry
 			}
 			return ni
@@ -95,11 +93,7 @@ func (i *Inode) Free(t *jrnl.TxnHandle) error {
 	}
 
 	i.Refcnt--
-	b := &bio.Block{
-		Nr:   i.Serialnum + firstBlkAddr,
-		Data: i.Encode(),
-	}
-	if err := t.WriteBlock(b); err != nil {
+	if err := i.Write(t); err != nil {
 		return err
 	}
 	i.Relse()
@@ -108,7 +102,7 @@ func (i *Inode) Free(t *jrnl.TxnHandle) error {
 
 // May fail silently (implicit success)
 func (i *Inode) Relse() {
-	actual := i.Serialnum + firstBlkAddr
+	actual := i.Serialnum + firstInodeAddr
 	b := &bio.Block{
 		Nr:   actual,
 		Data: i.Encode(),
@@ -118,8 +112,8 @@ func (i *Inode) Relse() {
 
 // Always succeeds
 func Geti(id uint) *Inode {
-	id = firstBlkAddr + id
-	if id >= firstBlkAddr+numInodes {
+	id = firstInodeAddr + id
+	if id >= firstInodeAddr+numInodes {
 		log.Fatal("inode id out of range")
 	}
 
@@ -131,10 +125,24 @@ func Geti(id uint) *Inode {
 	return ni
 }
 
+// Update the inode in place without doing
+// anything else. May fail if we've lost the
+// lock on this inode.
+func (i *Inode) Write(t *jrnl.TxnHandle) error {
+	b := &bio.Block{
+		Nr:   i.Serialnum + firstInodeAddr,
+		Data: i.Encode(),
+	}
+	if err := t.WriteBlock(b); err != nil {
+		return err
+	}
+	return nil
+}
+
 // May fail if we've lost the lock by this point
 func (i *Inode) Renew() error {
 	b := &bio.Block{
-		Nr:   i.Serialnum + firstBlkAddr,
+		Nr:   i.Serialnum + firstInodeAddr,
 		Data: i.Encode(),
 	}
 	err := b.Brenew()
