@@ -8,8 +8,7 @@ import (
 	"pp2/labgob"
 )
 
-const dirDataBlks = 12
-const inDirDataBlks = bio.BlockSize / 8
+const dataBlks = 1022
 const firstInodeAddr = jrnl.EndJrnl + 1
 const numInodes = 16384
 const rootInum = 0
@@ -26,10 +25,10 @@ const (
 )
 
 type Inode struct {
-	Serialnum uint
-	Refcnt    uint
-	Filesize  uint
-	Addrs     []uint
+	Serialnum uint16
+	Refcnt    uint16
+	Filesize  uint16
+	Addrs     []uint32
 	Mode      IType
 	// timestamp Time
 }
@@ -51,13 +50,13 @@ retry:
 		blk := bio.Bget(uint(i))
 		if blk.Data == "" {
 			ni := &Inode{
-				Serialnum: uint(i) - firstInodeAddr,
+				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
 				Filesize:  0,
-				Addrs:     []uint{},
+				Addrs:     []uint32{},
 				Mode:      mode,
 			}
-			if ni.Write(t) != nil {
+			if ni.EnqWrite(t) != nil {
 				goto retry
 			}
 			return ni
@@ -66,13 +65,13 @@ retry:
 		ni := IDecode(blk.Data)
 		if ni.Refcnt == 0 {
 			ni = &Inode{
-				Serialnum: uint(i) - firstInodeAddr,
+				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
 				Filesize:  0,
-				Addrs:     []uint{},
+				Addrs:     []uint32{},
 				Mode:      mode,
 			}
-			if ni.Write(t) != nil {
+			if ni.EnqWrite(t) != nil {
 				goto retry
 			}
 			return ni
@@ -93,7 +92,7 @@ func (i *Inode) Free(t *jrnl.TxnHandle) error {
 	}
 
 	i.Refcnt--
-	if err := i.Write(t); err != nil {
+	if err := i.EnqWrite(t); err != nil {
 		return err
 	}
 	i.Relse()
@@ -102,7 +101,7 @@ func (i *Inode) Free(t *jrnl.TxnHandle) error {
 
 // May fail silently (implicit success)
 func (i *Inode) Relse() {
-	actual := i.Serialnum + firstInodeAddr
+	actual := uint(i.Serialnum) + firstInodeAddr
 	b := &bio.Block{
 		Nr:   actual,
 		Data: i.Encode(),
@@ -128,9 +127,10 @@ func Geti(id uint) *Inode {
 // Update the inode in place without doing
 // anything else. May fail if we've lost the
 // lock on this inode.
-func (i *Inode) Write(t *jrnl.TxnHandle) error {
+// Note that changes don't write through immediately
+func (i *Inode) EnqWrite(t *jrnl.TxnHandle) error {
 	b := &bio.Block{
-		Nr:   i.Serialnum + firstInodeAddr,
+		Nr:   uint(i.Serialnum) + firstInodeAddr,
 		Data: i.Encode(),
 	}
 	if err := t.WriteBlock(b); err != nil {
@@ -142,7 +142,7 @@ func (i *Inode) Write(t *jrnl.TxnHandle) error {
 // May fail if we've lost the lock by this point
 func (i *Inode) Renew() error {
 	b := &bio.Block{
-		Nr:   i.Serialnum + firstInodeAddr,
+		Nr:   uint(i.Serialnum) + firstInodeAddr,
 		Data: i.Encode(),
 	}
 	err := b.Brenew()
