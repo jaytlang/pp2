@@ -12,7 +12,7 @@ type indirect []uint
 
 // Always succeeds
 func (i *Inode) getIndirectBlk() *indirect {
-	if len(i.Addrs) <= dirDataBlks {
+	if i.Filesize <= dirDataBlks {
 		log.Fatal("asked for non-existent indirect")
 	}
 
@@ -24,7 +24,7 @@ func (i *Inode) getIndirectBlk() *indirect {
 // May fail if the lock on the indirect block
 // has been lost
 func (i *Inode) putIndirect(ind *indirect) error {
-	if len(i.Addrs) <= dirDataBlks {
+	if i.Filesize <= dirDataBlks {
 		log.Fatal("putting nonexistent indirect")
 	} else if len(*ind) > inDirDataBlks {
 		log.Fatal("too many indirect data blocks!")
@@ -45,7 +45,7 @@ func (i *Inode) putIndirect(ind *indirect) error {
 // or was already put successfully
 // Will always succeed (may fail silently)
 func (i *Inode) relseIndirect() {
-	if len(i.Addrs) <= dirDataBlks {
+	if i.Filesize <= dirDataBlks {
 		log.Fatal("asked for non-existent indirect")
 	}
 

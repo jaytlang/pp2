@@ -11,10 +11,10 @@ import (
 const dirDataBlks = 12
 const inDirDataBlks = bio.BlockSize / 8
 const firstBlkAddr = jrnl.EndJrnl + 1
-const inodeNum = 16384
+const numInodes = 16384
 const rootInum = 0
 
-const EndInode = firstBlkAddr + inodeNum + 1
+const EndInode = firstBlkAddr + numInodes + 1
 
 // maximum filesize is 2.04 mb ((dirdatablks+indirdatablks)*4096 bytes)
 
@@ -28,6 +28,7 @@ const (
 type Inode struct {
 	Serialnum uint
 	Refcnt    uint
+	Filesize  uint
 	Addrs     []uint
 	Mode      IType
 	// timestamp Time
@@ -46,12 +47,13 @@ var rootDirEnt = &DirEnt{
 // Always succeeds, might take awhile
 func Alloci(t *jrnl.TxnHandle, mode IType) *Inode {
 retry:
-	for i := firstBlkAddr; i < firstBlkAddr+inodeNum; i++ {
+	for i := firstBlkAddr; i < firstBlkAddr+numInodes; i++ {
 		blk := bio.Bget(uint(i))
 		if blk.Data == "" {
 			ni := &Inode{
 				Serialnum: uint(i) - firstBlkAddr,
 				Refcnt:    1,
+				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
@@ -67,6 +69,7 @@ retry:
 			ni = &Inode{
 				Serialnum: uint(i) - firstBlkAddr,
 				Refcnt:    1,
+				Filesize:  0,
 				Addrs:     []uint{},
 				Mode:      mode,
 			}
@@ -115,7 +118,8 @@ func (i *Inode) Relse() {
 
 // Always succeeds
 func Geti(id uint) *Inode {
-	if firstBlkAddr < id || id <= firstBlkAddr+inodeNum {
+	id = firstBlkAddr + id
+	if id >= firstBlkAddr+numInodes {
 		log.Fatal("inode id out of range")
 	}
 
