@@ -8,14 +8,12 @@ import (
 	"pp2/labgob"
 )
 
-const dataBlks = 1022
-const firstInodeAddr = jrnl.EndJrnl + 1
+const dataBlks = 511
+const firstInodeAddr = jrnl.EndJrnl + 2
 const numInodes = 16384
-const rootInum = 0
+const RootInum = 0
 
 const EndInode = firstInodeAddr + numInodes + 1
-
-// maximum filesize is 2.04 mb ((dirdatablks+indirdatablks)*4096 bytes)
 
 type IType byte
 
@@ -27,20 +25,10 @@ const (
 type Inode struct {
 	Serialnum uint16
 	Refcnt    uint16
-	Filesize  uint16
-	Addrs     []uint32
+	Filesize  uint
+	Addrs     []uint
 	Mode      IType
 	// timestamp Time
-}
-
-type DirEnt struct {
-	Filename string
-	Inodenum uint16
-}
-
-var rootDirEnt = &DirEnt{
-	Filename: "/",
-	Inodenum: rootInum,
 }
 
 // Always succeeds, might take awhile
@@ -52,8 +40,7 @@ retry:
 			ni := &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Filesize:  0,
-				Addrs:     []uint32{},
+				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
@@ -67,8 +54,7 @@ retry:
 			ni = &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Filesize:  0,
-				Addrs:     []uint32{},
+				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
@@ -85,7 +71,8 @@ retry:
 
 // Decrement the refcount on the inode. If it
 // hits zero, further allocs might pick it up.
-// Then, relse. The decrement may fail.
+// Then, relse. The decrement may fail if blkPerSys
+// is exceeded, but this is unlikely
 func (i *Inode) Free(t *jrnl.TxnHandle) error {
 	if i.Refcnt == 0 {
 		log.Fatal("double free")
@@ -110,8 +97,9 @@ func (i *Inode) Relse() {
 }
 
 // Always succeeds
-func Geti(id uint) *Inode {
-	id = firstInodeAddr + id
+// Panics if the inode doesn't exist
+func Geti(inum uint16) *Inode {
+	id := firstInodeAddr + uint(inum)
 	if id >= firstInodeAddr+numInodes {
 		log.Fatal("inode id out of range")
 	}
@@ -125,8 +113,8 @@ func Geti(id uint) *Inode {
 }
 
 // Update the inode in place without doing
-// anything else. May fail if we've lost the
-// lock on this inode.
+// anything else. May fail if blkPerSys is exceeded,
+// but otherwise will succeed okay
 // Note that changes don't write through immediately
 func (i *Inode) EnqWrite(t *jrnl.TxnHandle) error {
 	b := &bio.Block{
@@ -154,5 +142,4 @@ func (i *Inode) Renew() error {
 
 func InodeInit() {
 	labgob.Register(&Inode{})
-	labgob.Register(&DirEnt{})
 }

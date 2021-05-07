@@ -5,7 +5,11 @@ import (
 	"pp2/jrnl"
 )
 
-const startData = bitmapBlock + 1
+var startData uint
+
+func InitBalloc(dataStart uint) {
+	startData = dataStart
+}
 
 // Might fail if messing with the bitmap
 // also fails, but this is unlikely since we

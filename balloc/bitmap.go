@@ -2,11 +2,10 @@ package balloc
 
 import (
 	"pp2/bio"
-	"pp2/inode"
 	"pp2/jrnl"
 )
 
-const bitmapBlock = inode.EndInode + 1
+const bitmapBlock = jrnl.EndJrnl + 1
 
 type bitmap []byte
 

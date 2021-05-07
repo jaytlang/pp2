@@ -38,4 +38,4 @@ type RequestReply struct {
 	Value string
 }
 
-const lockLeaseTime = 5
+const lockLeaseTime = 30
