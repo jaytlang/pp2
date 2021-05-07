@@ -58,6 +58,41 @@ func runCli() {
 			inTxn = false
 			fmt.Printf("transaction ended\n")
 
+		case "alloci":
+			if len(i) != 1 {
+				goto badcmd
+			}
+			if !inTxn {
+				fmt.Printf("Not in transaction\n")
+				continue
+			}
+
+			i := inode.Alloci(t, inode.File)
+			i.Relse()
+			fmt.Printf("Got inode %d\n", i.Serialnum)
+
+		case "freei":
+			if len(i) != 2 {
+				goto badcmd
+			}
+			if !inTxn {
+				fmt.Printf("Not in transaction\n")
+				continue
+			}
+
+			inum, err := strconv.ParseUint(i[1], 10, 16)
+			if err != nil {
+				goto badcmd
+			}
+
+			i := inode.Geti(uint16(inum))
+			err = i.Free(t)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err.Error())
+			} else {
+				fmt.Printf("Freed %d\n", inum)
+			}
+
 		case "readi":
 			if len(i) != 4 {
 				goto badcmd
