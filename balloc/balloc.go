@@ -1,6 +1,7 @@
 package balloc
 
 import (
+	"fmt"
 	"log"
 	"pp2/jrnl"
 )
@@ -19,6 +20,7 @@ func AllocBlocks(t *jrnl.TxnHandle, cnt uint) []uint {
 retry:
 	btmp := getBitmap()
 	blks := []uint{}
+	fmt.Printf("Trying to alloc %d blocks\n", cnt)
 
 	for ; cnt > 0; cnt-- {
 		for i, bit := range btmp {
