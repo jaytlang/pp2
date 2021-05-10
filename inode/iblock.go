@@ -38,7 +38,6 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	}
 	i.Filesize = ns
 	i.EnqWrite(t)
-
 	return nil
 }
 
@@ -126,6 +125,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	// Get the inode in question
 	// Panics if this fails
 	i := Geti(inum)
+	defer i.Relse()
 
 	fmt.Printf("Writing inode w/ serial num %d\n", i.Serialnum)
 	// Setup the first block
@@ -199,6 +199,6 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		blk.Brelse()
 	}
 
-	i.Relse()
+	i.EnqWrite(t)
 	return tb, nil
 }
