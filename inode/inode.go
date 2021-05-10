@@ -2,6 +2,7 @@ package inode
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"pp2/bio"
 	"pp2/jrnl"
@@ -46,6 +47,7 @@ retry:
 			if ni.EnqWrite(t) != nil {
 				goto retry
 			}
+			fmt.Printf("Acquired inode w/ serial num %d from empty\n", ni.Serialnum)
 			return ni
 
 		}
@@ -60,6 +62,7 @@ retry:
 			if ni.EnqWrite(t) != nil {
 				goto retry
 			}
+			fmt.Printf("Acquired inode w/ serial num %d from non-empty, refcnt %d\n", ni.Serialnum, ni.Refcnt)
 			return ni
 		}
 		blk.Brelse()
@@ -83,6 +86,7 @@ func (i *Inode) Free(t *jrnl.TxnHandle) error {
 		return err
 	}
 	i.Relse()
+	fmt.Printf("Freed inode w/ serial num %d, refcnt %d\n", i.Serialnum, i.Refcnt)
 	return nil
 }
 
@@ -94,6 +98,7 @@ func (i *Inode) Relse() {
 		Data: i.Encode(),
 	}
 	b.Brelse()
+	fmt.Printf("Released inode w/ serial num %d\n", i.Serialnum)
 }
 
 // Always succeeds
@@ -109,6 +114,7 @@ func Geti(inum uint16) *Inode {
 		log.Fatal("empty Inode")
 	}
 	ni := IDecode(blk.Data)
+	fmt.Printf("Got inode w/ serial num %d, refcnt %d\n", ni.Serialnum, ni.Refcnt)
 	return ni
 }
 
@@ -124,6 +130,7 @@ func (i *Inode) EnqWrite(t *jrnl.TxnHandle) error {
 	if err := t.WriteBlock(b); err != nil {
 		return err
 	}
+	fmt.Printf("Enqueued inode to write w/ serial num %d, refcnt %d\n", i.Serialnum, i.Refcnt)
 	return nil
 }
 

@@ -2,6 +2,7 @@ package inode
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"pp2/balloc"
@@ -22,6 +23,7 @@ func saneCeil(a uint, b uint) uint {
 // cut off before bitmapget releases for some reason
 // Enqueues inode changes for writing
 func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
+	fmt.Printf("Increasing size of inode w/ serial num %d\n", i.Serialnum)
 	if i.Filesize >= ns {
 		log.Fatal("unneeded alloc")
 	} else if saneCeil(ns, 4096) > dataBlks {
@@ -52,6 +54,7 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 // May fail if we drop offline in the middle of it
 // Enqueues inode changes for writing
 func (i *Inode) truncate(t *jrnl.TxnHandle) error {
+	fmt.Printf("Truncating inode w/ serial num %d\n", i.Serialnum)
 	// Free every single block
 	err := balloc.RelseBlocks(t, i.Addrs)
 	if err != nil {
@@ -71,8 +74,11 @@ func (i *Inode) truncate(t *jrnl.TxnHandle) error {
 func Readi(inum uint16, offset uint, count uint) string {
 	// Get the inode in question
 	// Panics if this fails
+
 	i := Geti(inum)
 	res := ""
+
+	fmt.Printf("Reading inode w/ serial num %d\n", i.Serialnum)
 
 	// Setup the first block
 	bn := saneCeil(offset, 4096)
@@ -131,6 +137,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	// Panics if this fails
 	i := Geti(inum)
 
+	fmt.Printf("Writing inode w/ serial num %d\n", i.Serialnum)
 	// Setup the first block
 	bn := saneCeil(offset, 4096)
 	bo := offset % 4096
