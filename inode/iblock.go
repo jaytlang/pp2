@@ -75,6 +75,7 @@ func Readi(inum uint16, offset uint, count uint) string {
 
 	// Check that the first block exists
 	if bn >= uint(len(i.Addrs)) {
+		i.Relse()
 		return ""
 	}
 
