@@ -107,11 +107,11 @@ func Readi(inum uint16, offset uint, count uint) string {
 
 		// Get the next block. If there isn't one,
 		// return as we are
+		blk.Brelse()
 		if j == uint(len(i.Addrs))-1 {
-			blk.Brelse()
+			i.Relse()
 			return res
 		}
-		blk.Brelse()
 	}
 
 	i.Relse()
