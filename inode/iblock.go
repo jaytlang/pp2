@@ -148,7 +148,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	// == is ok if the last block takes up all 4096 bytes or whatever
 	if bn >= nDirectBlocks {
 		return 0, errors.New("maximum valid blocks exceeded")
-	} else if offset >= i.Filesize {
+	} else if offset >= i.Filesize && (offset != 0 && i.Filesize != 0) {
 		return 0, errors.New("tried to append past the end of the file")
 	}
 
