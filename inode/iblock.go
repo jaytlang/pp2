@@ -153,6 +153,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	}
 
 	totalbytes := uint(len([]byte(data)))
+	tb := totalbytes
 
 	for j := bn; totalbytes > 0; j++ {
 		blk := bio.Bget(i.Addrs[bn])
@@ -206,5 +207,5 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	}
 
 	i.Relse()
-	return totalbytes, nil
+	return tb, nil
 }
