@@ -156,13 +156,18 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		blk := bio.Bget(i.Addrs[bn])
 		bdata := blk.Data
 
+		// CURRENTLY WRONG
+		// If the block offset is > 0, regardless of data's length...
+		// Leave bdata up to bo standing, trim data appropriately
 		if bo > 0 {
 			bdata = bdata[:bo] + data[:4096-bo]
 			bo = 0
 			totalbytes -= (4096 - bo)
+			// Towards the end of the data
 		} else if totalbytes < 4096 {
 			bdata = data[:totalbytes] + bdata[totalbytes:]
 			totalbytes = 0
+			// Not towards the end of the data
 		} else {
 			bdata = data[:4096]
 			totalbytes -= 4096

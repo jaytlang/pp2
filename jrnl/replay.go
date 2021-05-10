@@ -125,6 +125,7 @@ func replayLogSegment(sb *logSB, sgmt uint) error {
 			goto retry
 		}
 
+		db.Brelse()
 		if lb.last {
 			break
 		}
