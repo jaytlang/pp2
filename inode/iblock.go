@@ -124,6 +124,8 @@ func Readi(inum uint16, offset uint, count uint) string {
 		}
 		blk.Brelse()
 	}
+
+	i.Relse()
 	return res
 }
 
@@ -202,5 +204,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		t.WriteBlock(blk)
 		blk.Brelse()
 	}
+
+	i.Relse()
 	return totalbytes, nil
 }
