@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"pp2/bio"
+	"pp2/fs"
 	"pp2/inode"
 	"pp2/jrnl"
 	"pp2/kvraft"
@@ -19,6 +20,7 @@ func runCli() {
 	rdr := bufio.NewReader(os.Stdin)
 	inTxn := false
 	var t *jrnl.TxnHandle
+	f := fs.Mount()
 
 	for {
 		fmt.Print("> ")
@@ -27,6 +29,69 @@ func runCli() {
 		i := strings.Split(ri, " ")
 
 		switch i[0] {
+		case "open":
+			if len(i) != 2 {
+				goto badcmd
+			}
+			res := f.Open(i[1])
+			fmt.Printf("Opened file %s -> fd %d\n", i[1], res)
+			continue
+
+		case "read":
+			if len(i) != 3 {
+				goto badcmd
+			}
+
+			fd, err := strconv.ParseInt(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			cnt, err := strconv.ParseUint(i[2], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			res, err := f.Read(int(fd), uint(cnt))
+			if err != nil {
+				fmt.Printf("Read error: %s\n", err)
+			} else {
+				fmt.Printf("Read data: %s\n", res)
+			}
+			continue
+
+		case "write":
+			if len(i) != 3 {
+				goto badcmd
+			}
+
+			fd, err := strconv.ParseInt(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			res, err := f.Write(int(fd), i[2])
+			if err != nil {
+				fmt.Printf("Write error: %s\n", err)
+			} else {
+				fmt.Printf("Wrote %d bytes of data", res)
+			}
+			continue
+
+		case "close":
+			if len(i) != 2 {
+				goto badcmd
+			}
+
+			fd, err := strconv.ParseInt(i[1], 10, 64)
+			if err != nil {
+				goto badcmd
+			}
+
+			f.Close(int(fd))
+			fmt.Printf("Closed fd %d\n", fd)
+			continue
+
 		case "begin":
 			if len(i) != 1 {
 				goto badcmd
