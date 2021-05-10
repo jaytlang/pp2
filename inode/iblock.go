@@ -38,6 +38,7 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	}
 	i.Filesize = ns
 	i.EnqWrite(t)
+	fmt.Printf("New i.Addrs length enqueued: %d\n", len(i.Addrs))
 	return nil
 }
 
@@ -199,6 +200,5 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		blk.Brelse()
 	}
 
-	i.EnqWrite(t)
 	return tb, nil
 }
