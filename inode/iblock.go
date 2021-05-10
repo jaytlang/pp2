@@ -148,12 +148,17 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	// == is ok if the last block takes up all 4096 bytes or whatever
 	if bn >= nDirectBlocks {
 		return 0, errors.New("maximum valid blocks exceeded")
-	} else if offset > i.Filesize+1 {
+	} else if offset >= i.Filesize {
 		return 0, errors.New("tried to append past the end of the file")
 	}
 
 	totalbytes := uint(len([]byte(data)))
 	tb := totalbytes
+
+	if offset+tb > i.Filesize {
+		// Increase size
+		i.increaseSize(t, offset+tb)
+	}
 
 	for j := bn; totalbytes > 0; j++ {
 		blk := bio.Bget(i.Addrs[bn])

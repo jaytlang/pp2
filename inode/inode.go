@@ -41,7 +41,7 @@ retry:
 			ni := &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Addrs:     make([]uint, nDirectBlocks),
+				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
@@ -56,7 +56,7 @@ retry:
 			ni = &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Addrs:     make([]uint, nDirectBlocks),
+				Addrs:     []uint{},
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
