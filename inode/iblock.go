@@ -164,12 +164,12 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 			// Otherwise, write data[:4096-bo]
 			if totalbytes > 4096-bo {
 				bdata = bdata[:bo] + data[:4096-bo]
-				totalbytes = 0
 				data = data[4096-bo:]
-				// Will break, don't change data
+				totalbytes -= (4096 - bo)
 			} else {
 				bdata = bdata[:bo] + data
-				totalbytes -= (4096 - bo)
+				totalbytes = 0
+				// Will break, don't change data
 			}
 
 			// Reset the block offset
