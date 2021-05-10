@@ -29,12 +29,14 @@ func Mount() *Filesystem {
 	f := new(Filesystem)
 	f.fdTable = make(map[int]*File)
 
-	t := jrnl.BeginTransaction()
-	root := inode.Alloci(t, inode.Dir)
-	f.rooti = root.Serialnum
-	root.Relse()
+	if !inode.Probei(0) {
+		t := jrnl.BeginTransaction()
+		root := inode.Alloci(t, inode.Dir)
+		root.Relse()
+		t.EndTransaction(false)
+	}
 
-	t.EndTransaction(false)
+	f.rooti = 0
 	return f
 }
 

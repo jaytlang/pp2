@@ -101,6 +101,18 @@ func (i *Inode) Relse() {
 	fmt.Printf("Released inode w/ serial num %d\n", i.Serialnum)
 }
 
+func Probei(inum uint16) bool {
+	id := firstInodeAddr + uint(inum)
+	if id >= firstInodeAddr+numInodes {
+		log.Fatal("inode id out of range")
+	}
+
+	blk := bio.Bget(id)
+	defer blk.Brelse()
+
+	return blk.Data != ""
+}
+
 // Always succeeds
 // Panics if the inode doesn't exist
 func Geti(inum uint16) *Inode {
