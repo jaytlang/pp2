@@ -132,7 +132,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 
 	fmt.Printf("Writing inode w/ serial num %d\n", i.Serialnum)
 	// Setup the first block
-	bn := saneCeil(offset, 4096)
+	bn := offset / 4096
 	bo := offset % 4096
 
 	// Check that the first block exists
