@@ -147,7 +147,6 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	tb := totalbytes
 
 	if offset+tb > i.Filesize {
-		// Increase size
 		i.increaseSize(t, offset+tb)
 	}
 
@@ -155,7 +154,6 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		blk := bio.Bget(i.Addrs[bn])
 		bdata := blk.Data
 
-		// CURRENTLY WRONG
 		// If the block offset is > 0, regardless of data's length...
 		// Leave bdata up to bo standing, trim data appropriately
 		if bo > 0 {
@@ -165,13 +163,13 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 			// If len(data) <= 4096 - bo, write all of data (CHECKME)
 			// Otherwise, write data[:4096-bo]
 			if totalbytes > 4096-bo {
-				bdata = bdata[:bo] + data
+				bdata = bdata[:bo] + data[:4096-bo]
 				totalbytes = 0
+				data = data[4096-bo:]
 				// Will break, don't change data
 			} else {
-				bdata = bdata[:bo] + data[:4096-bo]
+				bdata = bdata[:bo] + data
 				totalbytes -= (4096 - bo)
-				data = data[4096-bo:]
 			}
 
 			// Reset the block offset
