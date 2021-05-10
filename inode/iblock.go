@@ -26,7 +26,7 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	fmt.Printf("Increasing size of inode w/ serial num %d\n", i.Serialnum)
 	if i.Filesize >= ns {
 		log.Fatal("unneeded alloc")
-	} else if saneCeil(ns, 4096) > dataBlks {
+	} else if saneCeil(ns, 4096) > nDirectBlocks {
 		return errors.New("file would be too large")
 	}
 
@@ -144,7 +144,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 
 	// Check that the first block exists
 	// == is ok if the last block takes up all 4096 bytes or whatever
-	if bn >= dataBlks {
+	if bn >= nDirectBlocks {
 		return 0, errors.New("maximum valid blocks exceeded")
 	} else if offset > i.Filesize+1 {
 		return 0, errors.New("tried to append past the end of the file")

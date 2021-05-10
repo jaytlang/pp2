@@ -9,7 +9,7 @@ import (
 	"pp2/labgob"
 )
 
-const dataBlks = 511
+const nDirectBlocks = 511
 const firstInodeAddr = jrnl.EndJrnl + 2
 const numInodes = 16384
 const RootInum = 0
@@ -41,7 +41,7 @@ retry:
 			ni := &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Addrs:     []uint{},
+				Addrs:     make([]uint, nDirectBlocks),
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
@@ -56,7 +56,7 @@ retry:
 			ni = &Inode{
 				Serialnum: uint16(i - firstInodeAddr),
 				Refcnt:    1,
-				Addrs:     []uint{},
+				Addrs:     make([]uint, nDirectBlocks),
 				Mode:      mode,
 			}
 			if ni.EnqWrite(t) != nil {
