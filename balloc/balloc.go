@@ -28,7 +28,7 @@ retry:
 				setBit(btmp, uint(i))
 				res := uint(i) + startData
 				blks = append(blks, res)
-				continue
+				break
 			}
 		}
 	}
