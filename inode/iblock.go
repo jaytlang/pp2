@@ -63,19 +63,18 @@ func (i *Inode) truncate(t *jrnl.TxnHandle) {
 func Readi(inum uint16, offset uint, count uint) string {
 	// Get the inode in question
 	// Panics if this fails
-
 	i := Geti(inum)
+	defer i.Relse()
 	res := ""
 
 	fmt.Printf("Reading inode w/ serial num %d\n", i.Serialnum)
 
 	// Setup the first block
-	bn := saneCeil(offset, 4096)
+	bn := offset / 4096
 	bo := offset % 4096
 
 	// Check that the first block exists
 	if bn >= uint(len(i.Addrs)) {
-		i.Relse()
 		return ""
 	}
 
@@ -110,12 +109,10 @@ func Readi(inum uint16, offset uint, count uint) string {
 		// return as we are
 		blk.Brelse()
 		if j == uint(len(i.Addrs))-1 {
-			i.Relse()
 			return res
 		}
 	}
 
-	i.Relse()
 	return res
 }
 
