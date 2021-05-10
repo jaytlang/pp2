@@ -67,7 +67,7 @@ func Readi(inum uint16, offset uint, count uint) string {
 	defer i.Relse()
 	res := ""
 
-	fmt.Printf("Reading inode w/ serial num %d\n", i.Serialnum)
+	fmt.Printf("Reading %d bytes from inode w/ serial num %d\n", count, i.Serialnum)
 
 	// Setup the first block
 	bn := offset / 4096
@@ -75,6 +75,7 @@ func Readi(inum uint16, offset uint, count uint) string {
 
 	// Check that the first block exists
 	if bn >= uint(len(i.Addrs)) {
+		fmt.Printf("Note: bn > len(i.Addrs)\n")
 		return ""
 	}
 
