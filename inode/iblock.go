@@ -160,17 +160,42 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 		// If the block offset is > 0, regardless of data's length...
 		// Leave bdata up to bo standing, trim data appropriately
 		if bo > 0 {
-			bdata = bdata[:bo] + data[:4096-bo]
+			// We've already checked that the offset doesn't
+			// go over the end of the file. Therefore, bdata[:bo]
+			// will work out no matter what
+			// If len(data) <= 4096 - bo, write all of data (CHECKME)
+			// Otherwise, write data[:4096-bo]
+			if totalbytes > 4096-bo {
+				bdata = bdata[:bo] + data
+				totalbytes = 0
+				// Will break, don't change data
+			} else {
+				bdata = bdata[:bo] + data[:4096-bo]
+				totalbytes -= (4096 - bo)
+				data = data[4096-bo:]
+			}
+
+			// Reset the block offset
 			bo = 0
-			totalbytes -= (4096 - bo)
-			// Towards the end of the data
+
 		} else if totalbytes < 4096 {
-			bdata = data[:totalbytes] + bdata[totalbytes:]
+			// We are towards the end of the data. Write what's left
+			// of data (data[:totalbytes]) and leave bdata[totalbytes:]
+			// if the bdata is long enough
+			if len(bdata) > int(totalbytes) {
+				bdata = data[:totalbytes] + bdata[totalbytes:]
+			} else {
+				bdata = data[:totalbytes] + bdata
+			}
+
+			// Cause the break, don't touch data cuz we don't need to
 			totalbytes = 0
-			// Not towards the end of the data
 		} else {
+			// We are not towards the end of the data. Overwrite the block
+			// and trim the data
 			bdata = data[:4096]
 			totalbytes -= 4096
+			data = data[4096:]
 		}
 
 		blk.Data = bdata
