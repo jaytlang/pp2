@@ -33,13 +33,16 @@ retry:
 		}
 	}
 
+	// Checkme
 	if uint(len(blks)) < cnt {
 		log.Fatal("no blocks to alloc big sad")
 	}
+
 	if err := updateAndRelseBitmap(t, btmp); err != nil {
 		// We lost the bitmap. Try again...
 		goto retry
 	}
+	fmt.Printf("allocated %d blocks\n", len(blks))
 	return blks
 }
 

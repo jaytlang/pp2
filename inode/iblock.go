@@ -33,6 +33,8 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	addedBlocks := newBlocks - currentBlocks
 
 	if addedBlocks > 0 {
+		fmt.Printf("c: %d vs. n: %d vs. a: %d\n", currentBlocks, newBlocks, addedBlocks)
+		fmt.Printf("Old iaddrs length: %d\n", len(i.Addrs))
 		blnl := balloc.AllocBlocks(t, addedBlocks)
 		i.Addrs = append(i.Addrs, blnl...)
 	}
