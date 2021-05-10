@@ -64,7 +64,7 @@ func (f *Filesystem) Open(fname string) int {
 
 		t := jrnl.BeginTransaction()
 		newi := inode.Alloci(t, inode.File)
-		inode.Writei(t, f.rooti, uint(len(rawroot)), fmt.Sprintf("%s,%d ", fname, newi))
+		inode.Writei(t, f.rooti, uint(len(rawroot)), fmt.Sprintf("%s,%d ", fname, newi.Serialnum))
 		inum = newi.Serialnum
 
 		t.EndTransaction(false)
