@@ -19,8 +19,6 @@ func saneCeil(a uint, b uint) uint {
 // Fails if ns <= i.Filesize, errors if
 // filesize will exceed dataBlks
 // Burns the allocblocks call
-// May fail if allocblocks fails e.g. we get
-// cut off before bitmapget releases for some reason
 // Enqueues inode changes for writing
 func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	fmt.Printf("Increasing size of inode w/ serial num %d\n", i.Serialnum)
@@ -35,12 +33,7 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 	addedBlocks := newBlocks - currentBlocks
 
 	if addedBlocks > 0 {
-		blnl, err := balloc.AllocBlocks(t, addedBlocks)
-		if err != nil {
-			return err
-		}
-
-		// Go through the inode and update the directs
+		blnl := balloc.AllocBlocks(t, addedBlocks)
 		i.Addrs = append(i.Addrs, blnl...)
 	}
 	i.Filesize = ns
@@ -51,19 +44,15 @@ func (i *Inode) increaseSize(t *jrnl.TxnHandle, ns uint) error {
 
 // Decreases filesize to zero
 // Burns the call into balloc since it frees everything
-// May fail if we drop offline in the middle of it
 // Enqueues inode changes for writing
-func (i *Inode) truncate(t *jrnl.TxnHandle) error {
+// Does not fail
+func (i *Inode) truncate(t *jrnl.TxnHandle) {
 	fmt.Printf("Truncating inode w/ serial num %d\n", i.Serialnum)
 	// Free every single block
-	err := balloc.RelseBlocks(t, i.Addrs)
-	if err != nil {
-		return err
-	}
+	balloc.RelseBlocks(t, i.Addrs)
 	i.Addrs = []uint{}
 	i.Filesize = 0
 	i.EnqWrite(t)
-	return nil
 }
 
 // Reads a certain count of data from a certain
