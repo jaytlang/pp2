@@ -342,7 +342,7 @@ func main() {
 	if a[1] == "ns" {
 		netdrv.RunNameserver()
 	} else if a[1] == "client" {
-		bio.Binit(a[2])
+		bio.Binit(a[2], false)
 		jrnl.InitSb()
 		inode.InodeInit()
 		runCli()

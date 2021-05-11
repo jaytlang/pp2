@@ -22,9 +22,9 @@ const (
 	ErrBadSize
 )
 
-var dsk *kvraft.Clerk
+var dsk Disk
 
-func Binit(nsAddr string) {
+func Binit(nsAddr string, test bool) {
 	conf := netdrv.MkDefaultNetConfig(false, false, nsAddr)
 	dsk = kvraft.MakeClerk(conf)
 }
@@ -53,12 +53,6 @@ retry:
 // otherwise an error will be returned
 func (b *Block) Bpush() BioError {
 	nstr := fmt.Sprintf("%d", b.Nr)
-
-	/*
-		if len(b.Data) > blockSize {
-			return ErrBadSize
-		}
-	*/
 
 	err := dsk.Put(nstr, b.Data)
 	if err != nil {
