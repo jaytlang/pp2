@@ -25,14 +25,22 @@ const (
 var dsk Disk
 
 func Binit(nsAddr string, test bool) {
-	conf := netdrv.MkDefaultNetConfig(false, false, nsAddr)
-	dsk = kvraft.MakeClerk(conf)
+	if test {
+		dsk = &MockDisk{
+			kv: make(map[string]string),
+		}
+	} else {
+		conf := netdrv.MkDefaultNetConfig(false, false, nsAddr)
+		dsk = kvraft.MakeClerk(conf)
+	}
 }
 
 // Acquires a block along with its
 // lock. Will continually contend for
 // a given lock until it gets it, then
-// return back.
+// return back. Returns the empty string
+// inside the appropriately-numbered block
+// if it is currently empty
 func Bget(nr uint) *Block {
 	nstr := fmt.Sprintf("%d", nr)
 

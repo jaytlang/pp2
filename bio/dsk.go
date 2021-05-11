@@ -1,6 +1,7 @@
 package bio
 
 import (
+	"errors"
 	"log"
 )
 
@@ -44,9 +45,7 @@ func (m *MockDisk) Acquire(lockk string) {
 
 func (m *MockDisk) Release(lockk string) error {
 	if m.kv["lock_"+lockk] == "0" {
-		// This disk is single threaded, if this
-		// happens we have a serious problem
-		log.Fatal("double free of lock")
+		return errors.New("lock not held")
 	}
 	m.kv["lock_"+lockk] = "0"
 	return nil
@@ -56,7 +55,7 @@ func (m *MockDisk) Renew(lockk string) error {
 	if m.kv["lock_"+lockk] == "0" {
 		// This disk is single threaded, if this
 		// happens we have a serious problem
-		log.Fatal("renewal of dead lock")
+		return errors.New("lock not held")
 	}
 	return nil
 }
