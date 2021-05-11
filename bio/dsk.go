@@ -2,7 +2,7 @@ package bio
 
 import (
 	"errors"
-	"log"
+	"time"
 )
 
 type Disk interface {
@@ -20,19 +20,25 @@ type MockDisk struct {
 }
 
 func (m *MockDisk) Get(key string) (string, error) {
+	if m.kv["lock_"+key] != "1" {
+		return "", errors.New("lock not held")
+	}
 	return m.kv[key], nil
 }
 
 func (m *MockDisk) Put(key string, value string) error {
+	if m.kv["lock_"+key] != "1" {
+		return errors.New("lock not held")
+	}
 	m.kv[key] = value
 	return nil
 }
 
 func (m *MockDisk) Acquire(lockk string) {
-	if m.kv["lock_"+lockk] == "1" {
+	for m.kv["lock_"+lockk] == "1" {
 		// This disk is single threaded, if this
 		// happens we have a serious problem
-		log.Fatal("double lock -> deadlock!")
+		time.Sleep(500 * time.Millisecond)
 	}
 	m.kv["lock_"+lockk] = "1"
 }

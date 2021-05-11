@@ -73,7 +73,6 @@ func (b *Block) Brenew() BioError {
 	nstr := fmt.Sprintf("%d", b.Nr)
 	err := dsk.Renew(nstr)
 	if err != nil {
-		log.Print("warning: renew called without lock")
 		return ErrNoLock
 	}
 	return OK
