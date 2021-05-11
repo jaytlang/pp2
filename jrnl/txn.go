@@ -35,6 +35,7 @@ retry:
 	ilb.rdata = blk.Data
 
 	nlb := flattenLb(ilb)
+	fmt.Printf("Writing log block %v\n", *nlb)
 	err := nlb.Bpush()
 	if err != bio.OK {
 		goto retry
@@ -82,7 +83,6 @@ done:
 	}
 	nsb.Brelse()
 
-	fmt.Printf("Began transaction in log segment %d\n", res)
 	return &TxnHandle{
 		blkSeg: res,
 		offset: 0,
@@ -114,7 +114,6 @@ retry:
 		goto retry
 	}
 	sb.cnt--
-	fmt.Printf("Finished a transaction\n")
 
 	if sb.cnt == 0 {
 		fmt.Printf("Outstanding transactions to zero.\n")
