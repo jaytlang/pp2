@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"pp2/balloc"
 	"pp2/bio"
 	"pp2/fs"
 	"pp2/inode"
@@ -344,6 +345,7 @@ func main() {
 	} else if a[1] == "client" {
 		bio.Binit(a[2], false)
 		jrnl.InitSb()
+		balloc.InitBalloc(jrnl.EndJrnl + 1)
 		inode.InodeInit()
 		runCli()
 
