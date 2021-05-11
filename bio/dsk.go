@@ -8,7 +8,6 @@ import (
 type Disk interface {
 	Get(key string) (string, error)
 	Put(key string, value string) error
-	Append(key string, value string) error
 	Acquire(lockk string)
 	Release(lockk string) error
 	Renew(lockk string) error
@@ -26,11 +25,6 @@ func (m *MockDisk) Get(key string) (string, error) {
 
 func (m *MockDisk) Put(key string, value string) error {
 	m.kv[key] = value
-	return nil
-}
-
-func (m *MockDisk) Append(key string, value string) error {
-	m.kv[key] += value
 	return nil
 }
 
