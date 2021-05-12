@@ -35,13 +35,13 @@ retry:
 	ilb.rdata = blk.Data
 
 	nlb := flattenLb(ilb)
-	fmt.Printf("Writing log block %v\n", *nlb)
 	err := nlb.Bpush()
 	if err != bio.OK {
 		goto retry
 	}
 
 	nlb.Brelse()
+
 	t.offset++
 	return nil
 }

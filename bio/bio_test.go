@@ -2,7 +2,6 @@ package bio
 
 import (
 	"testing"
-	"time"
 )
 
 // Test the bio interface, Binit/Bget/Bpush/Brelse/Brenew,
@@ -128,32 +127,6 @@ func TestRenew(t *testing.T) {
 	err = b.Brenew()
 	if err == OK {
 		t.Errorf("somehow renewed freed block\n")
-	}
-}
-
-// Covers:
-//	- bget/nr/held
-func TestDoubleLock(t *testing.T) {
-	Binit("", true)
-	b := Bget(5)
-	expect := Block{
-		Nr:   5,
-		Data: "",
-	}
-	if *b != expect {
-		t.Errorf("got %v instead of %v\n", *b, expect)
-	}
-
-	c := make(chan bool)
-	go func() {
-		Bget(5)
-		c <- true
-	}()
-	select {
-	case <-c:
-		t.Errorf("double acquire succeeded\n")
-	case <-time.After(time.Second):
-		return
 	}
 }
 

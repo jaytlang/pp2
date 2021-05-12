@@ -82,8 +82,9 @@ func Readi(inum uint16, offset uint, count uint) string {
 	}
 
 	for j := bn; count > 0; j++ {
-		blk := bio.Bget(i.Addrs[bn])
+		blk := bio.Bget(i.Addrs[j])
 		data := blk.Data
+		fmt.Printf("Block data: %s\n", data)
 
 		// First iteration only: block offset check
 		if bo > 0 {
@@ -102,6 +103,7 @@ func Readi(inum uint16, offset uint, count uint) string {
 			toread = count
 		}
 		count -= toread
+		fmt.Printf("count: %d\n", count)
 
 		// Read the data
 		rb := []byte(res)
@@ -137,6 +139,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 
 	// Check that the first block exists
 	// == is ok if the last block takes up all 4096 bytes or whatever
+	fmt.Printf("bn: %d, bo: %d\n", bn, bo)
 	if bn >= nDirectBlocks {
 		return 0, errors.New("maximum valid blocks exceeded")
 	} else if offset > i.Filesize && (offset != 0 && i.Filesize != 0) {
@@ -146,12 +149,15 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 	totalbytes := uint(len([]byte(data)))
 	tb := totalbytes
 
+	if offset+tb > nDirectBlocks*bio.BlockSize {
+		return 0, errors.New("that write too big")
+	}
 	if offset+tb > i.Filesize {
 		i.increaseSize(t, offset+tb)
 	}
 
 	for j := bn; totalbytes > 0; j++ {
-		blk := bio.Bget(i.Addrs[bn])
+		blk := bio.Bget(i.Addrs[j])
 		bdata := blk.Data
 
 		// If the block offset is > 0, regardless of data's length...

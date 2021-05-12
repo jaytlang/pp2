@@ -33,7 +33,7 @@ func flattenSb(sb *logSB) *bio.Block {
 
 func parseLb(blk *bio.Block) *logBlock {
 	lst := strings.Split(blk.Data, "/")
-	if len(lst) != 3 {
+	if len(lst) < 3 {
 		return &logBlock{lnr: blk.Nr}
 	}
 

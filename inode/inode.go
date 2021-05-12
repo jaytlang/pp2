@@ -142,7 +142,7 @@ func (i *Inode) EnqWrite(t *jrnl.TxnHandle) error {
 	if err := t.WriteBlock(b); err != nil {
 		return err
 	}
-	fmt.Printf("Enqueued inode to write w/ serial num %d, refcnt %d\n", i.Serialnum, i.Refcnt)
+	fmt.Printf("Enqueued inode to write w/ serial num %d -> block %d, refcnt %d\n", i.Serialnum, b.Nr, i.Refcnt)
 	return nil
 }
 

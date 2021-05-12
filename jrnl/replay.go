@@ -114,6 +114,7 @@ func replayLogSegment(sb *logSB, sgmt uint) error {
 			Nr:   lb.rnr,
 			Data: lb.rdata,
 		}
+		fmt.Printf("committing blk %v\n", *db)
 
 		flattenLb(lb).Brelse()
 		err := db.Bpush()
