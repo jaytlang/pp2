@@ -192,7 +192,7 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 			if len(bdata) > int(totalbytes) {
 				bdata = data[:totalbytes] + bdata[totalbytes:]
 			} else {
-				bdata = data[:totalbytes] + bdata
+				bdata = data[:totalbytes]
 			}
 
 			// Cause the break, don't touch data cuz we don't need to
