@@ -345,7 +345,7 @@ func main() {
 	} else if a[1] == "client" {
 		bio.Binit(a[2], false)
 		jrnl.InitSb()
-		balloc.InitBalloc(jrnl.EndJrnl + 1)
+		balloc.InitBalloc(inode.EndInode)
 		inode.InodeInit()
 		runCli()
 

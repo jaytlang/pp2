@@ -22,6 +22,7 @@ retry:
 	blks := []uint{}
 	fmt.Printf("Trying to alloc %d blocks\n", cnt)
 
+	totalCnt := cnt
 	for ; cnt > 0; cnt-- {
 		for i, bit := range btmp {
 			if bit == 0 {
@@ -34,7 +35,7 @@ retry:
 	}
 
 	// Checkme
-	if uint(len(blks)) < cnt {
+	if uint(len(blks)) < totalCnt {
 		log.Fatal("no blocks to alloc big sad")
 	}
 
