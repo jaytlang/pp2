@@ -107,7 +107,7 @@ func Readi(inum uint16, offset uint, count uint) string {
 
 		// Read the data
 		rb := []byte(res)
-		rb = append(rb, []byte(data)...)
+		rb = append(rb, []byte(data[:toread])...)
 		res = string(rb)
 
 		// Get the next block. If there isn't one,
@@ -173,7 +173,11 @@ func Writei(t *jrnl.TxnHandle, inum uint16, offset uint, data string) (uint, err
 				data = data[4096-bo:]
 				totalbytes -= (4096 - bo)
 			} else {
-				bdata = bdata[:bo] + data
+				if uint(len(bdata)) <= bo+uint(len(data)) {
+					bdata = bdata[:bo] + data
+				} else {
+					bdata = bdata[:bo] + data + bdata[uint(len(data))+bo:]
+				}
 				totalbytes = 0
 				// Will break, don't change data
 			}

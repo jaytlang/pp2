@@ -238,7 +238,7 @@ func TestSmallOffset(tt *testing.T) {
 	t.EndTransaction(false)
 
 	dat := Readi(i1.Serialnum, 2, 7)
-	expect := "abbb"
+	expect := "abbbaaa"
 	if dat != expect {
 		tt.Errorf("read %v vs. expected %v\n", dat, expect)
 	}
