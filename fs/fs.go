@@ -70,6 +70,7 @@ func (f *Filesystem) Open(fname string) int {
 		inum = newi.Serialnum
 
 		t.EndTransaction(false)
+		newi.Relse()
 		fmt.Printf("Made new file %s\n", fname)
 	}
 
