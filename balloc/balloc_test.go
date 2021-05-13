@@ -34,7 +34,7 @@ func TestSimpleAlloc(tt *testing.T) {
 		tt.Errorf("1 block not allocated: got %v\n", blks)
 	}
 
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 	RelseBlocks(t, blks)
 }
 
@@ -49,7 +49,7 @@ func TestMultiBlockAlloc(tt *testing.T) {
 		tt.Errorf("5 blocks not allocated: got %d, wanted 5\n", len(blks))
 	}
 
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 	RelseBlocks(t, blks)
 }
 
@@ -60,7 +60,7 @@ func TestMoreThanOneAlloc(tt *testing.T) {
 	initUut()
 	t := jrnl.BeginTransaction()
 	blk1 := AllocBlocks(t, 1)
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 
 	if len(blk1) != 1 {
 		tt.Errorf("1 block not allocated: got %v\n", blk1)
@@ -68,7 +68,7 @@ func TestMoreThanOneAlloc(tt *testing.T) {
 
 	t = jrnl.BeginTransaction()
 	blk2 := AllocBlocks(t, 1)
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 
 	if len(blk2) != 1 {
 		tt.Errorf("1 block not allocated: got %v\n", blk2)
@@ -85,7 +85,7 @@ func TestBigAlloc(tt *testing.T) {
 	initUut()
 	t := jrnl.BeginTransaction()
 	b := AllocBlocks(t, 4096)
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 
 	if len(b) != 4096 {
 		tt.Errorf("4096 blocks not allocated: got %v\n", b)
@@ -93,11 +93,11 @@ func TestBigAlloc(tt *testing.T) {
 
 	t = jrnl.BeginTransaction()
 	RelseBlocks(t, b)
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 
 	t = jrnl.BeginTransaction()
 	b = AllocBlocks(t, 4096)
-	t.EndTransaction(false)
+	t.EndTransaction(false, true)
 
 	if len(b) != 4096 {
 		tt.Errorf("4096 blocks not allocated: got %v\n", b)

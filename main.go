@@ -109,7 +109,7 @@ func runCli() {
 				fmt.Printf("not in transaction\n")
 				continue
 			}
-			t.EndTransaction(false)
+			t.EndTransaction(false, true)
 			t = nil
 			inTxn = false
 			fmt.Printf("transaction ended\n")
@@ -119,7 +119,7 @@ func runCli() {
 				fmt.Printf("not in transaction\n")
 				continue
 			}
-			t.AbortTransaction()
+			t.AbortTransaction(true)
 			t = nil
 			inTxn = false
 			fmt.Printf("transaction ended\n")
