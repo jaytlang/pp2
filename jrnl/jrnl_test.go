@@ -45,7 +45,7 @@ func TestSimple(tt *testing.T) {
 	}); err != nil {
 		tt.Errorf("failed to write block")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	b := bio.Bget(0)
 	expect := bio.Block{
@@ -72,7 +72,7 @@ func TestConsecutive(tt *testing.T) {
 		tt.Errorf("failed to write to block")
 	}
 
-	t1.EndTransaction(false, true)
+	t1.EndTransaction(false)
 
 	b := bio.Bget(0)
 	expect := bio.Block{
@@ -91,7 +91,7 @@ func TestConsecutive(tt *testing.T) {
 	}); err_t2 != nil {
 		tt.Errorf("failed to write to block")
 	}
-	t2.EndTransaction(false, true)
+	t2.EndTransaction(false)
 
 	b = bio.Bget(0)
 	expect.Data = "secondTxn"
@@ -126,8 +126,8 @@ func TestNested(tt *testing.T) {
 		tt.Errorf("failed to write to block")
 	}
 
-	t2.EndTransaction(false, false)
-	t1.EndTransaction(false, false)
+	t2.EndTransaction(false)
+	t1.EndTransaction(false)
 
 	b := bio.Bget(0)
 	expect := bio.Block{
@@ -163,7 +163,7 @@ func TestOverlapping(tt *testing.T) {
 	}); err != nil {
 		tt.Errorf("failed to write to block")
 	}
-	t1.EndTransaction(false, false)
+	t1.EndTransaction(false)
 
 	if err := t2.WriteBlock(&bio.Block{
 		Nr:   1,
@@ -177,7 +177,7 @@ func TestOverlapping(tt *testing.T) {
 	}); err != nil {
 		tt.Errorf("failed to write to block")
 	}
-	t2.EndTransaction(false, false)
+	t2.EndTransaction(false)
 
 	b := bio.Bget(0)
 	expect := bio.Block{
@@ -213,7 +213,7 @@ func TestManyWrites(tt *testing.T) {
 			tt.Errorf("failed to write to block")
 		}
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	for i := uint(EndJrnl); i < EndJrnl+blkPerSys; i++ {
 		b := bio.Bget(i)
@@ -248,7 +248,7 @@ func TestManyTransactions(tt *testing.T) {
 	}
 
 	for k := uint(EndJrnl); k < EndJrnl+sysPerLog; k++ {
-		tArr[k-uint(EndJrnl)].EndTransaction(false, false)
+		tArr[k-uint(EndJrnl)].EndTransaction(false)
 	}
 
 	for i := uint(EndJrnl); i < EndJrnl+sysPerLog; i++ {
@@ -279,7 +279,7 @@ func TestSimpleAbort(tt *testing.T) {
 		tt.Errorf("failed to write to block")
 	}
 
-	t.AbortTransaction(true)
+	t.AbortTransaction()
 
 	b := bio.Bget(0)
 	expect := bio.Block{
@@ -302,7 +302,7 @@ func TestMultipleAbort(tt *testing.T) {
 	}); err != nil {
 		tt.Errorf("failed to write to block")
 	}
-	t1.EndTransaction(false, false)
+	t1.EndTransaction(false)
 
 	if err := t2.WriteBlock(&bio.Block{
 		Nr:   1,
@@ -310,7 +310,7 @@ func TestMultipleAbort(tt *testing.T) {
 	}); err != nil {
 		tt.Errorf("failed to write to block")
 	}
-	t2.AbortTransaction(true)
+	t2.AbortTransaction()
 
 	b := bio.Bget(0)
 	expect := bio.Block{

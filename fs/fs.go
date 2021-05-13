@@ -33,7 +33,7 @@ func Mount() *Filesystem {
 		t := jrnl.BeginTransaction()
 		root := inode.Alloci(t, inode.Dir)
 		root.Relse()
-		t.EndTransaction(false, true)
+		t.EndTransaction(false)
 	}
 
 	f.rooti = 0
@@ -69,7 +69,7 @@ func (f *Filesystem) Open(fname string) int {
 		inode.Writei(t, f.rooti, uint(len(rawroot)), fmt.Sprintf("%s,%d ", fname, newi.Serialnum))
 		inum = newi.Serialnum
 
-		t.EndTransaction(false, true)
+		t.EndTransaction(false)
 		newi.Relse()
 		fmt.Printf("Made new file %s\n", fname)
 	}
@@ -103,11 +103,11 @@ func (f *Filesystem) Write(fd int, data string) (uint, error) {
 	t := jrnl.BeginTransaction()
 	cnt, err := inode.Writei(t, file.inum, file.offset, data)
 	if err != nil {
-		t.AbortTransaction(true)
+		t.AbortTransaction()
 		return 0, err
 	}
 
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 	file.offset += cnt
 	return cnt, nil
 

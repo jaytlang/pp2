@@ -92,8 +92,7 @@ done:
 // Will always succeed. Might take a while.
 // However, before you call this, ensure you hold
 // all blocks that you touched during the transaction.
-func (t *TxnHandle) EndTransaction(abt bool, wait bool) {
-	fmt.Printf("Ending txn\n")
+func (t *TxnHandle) EndTransaction(abt bool) {
 markLast:
 	lbn := getLogSegmentStart(t.blkSeg) + t.offset - 1
 	if t.offset == 0 {
@@ -115,12 +114,7 @@ retry:
 		goto retry
 	}
 	sb.cnt--
-	err = flattenSb(sb).Bpush()
-	if err != bio.OK {
-		goto retry
-	}
 
-stall:
 	if sb.cnt == 0 {
 		fmt.Printf("Outstanding transactions to zero.\n")
 
@@ -141,23 +135,25 @@ stall:
 				goto retry
 			}
 			fmt.Printf("Committed.\n")
+		} else {
+			err := flattenSb(sb).Bpush()
+			if err != bio.OK {
+				goto retry
+			}
 		}
-		flattenSb(sb).Brelse()
-		return
 	} else {
-		flattenSb(sb).Brelse()
-		if wait {
-			sb = parseSb(bio.Bget(sbNr))
-			goto stall
+		err := flattenSb(sb).Bpush()
+		if err != bio.OK {
+			goto retry
 		}
-		return
 	}
+	flattenSb(sb).Brelse()
 }
 
 // Will always succeed. Might take a while.
 // However, before you call this, ensure you hold
 // all blocks that you touched during the transaction.
-func (t *TxnHandle) AbortTransaction(wait bool) {
+func (t *TxnHandle) AbortTransaction() {
 retry:
 	sb := parseSb(bio.Bget(sbNr))
 	if sb.commit > 0 {
@@ -176,5 +172,5 @@ retry:
 	}
 
 	nsb.Brelse()
-	t.EndTransaction(true, wait)
+	t.EndTransaction(true)
 }

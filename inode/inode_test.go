@@ -57,7 +57,7 @@ func TestEmptyReadWrite(tt *testing.T) {
 	if !cmp.Equal(expect, *i) {
 		tt.Errorf("didn't get right inode, got %v/wanted %v\n", *i, expect)
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	cnt, err := Writei(t, 0, 0, "")
@@ -67,7 +67,7 @@ func TestEmptyReadWrite(tt *testing.T) {
 		tt.Errorf("error during write")
 	}
 
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 	data := Readi(0, 0, 0)
 	if data != "" {
 		tt.Errorf("didn't read empty data as expected")
@@ -77,7 +77,7 @@ func TestEmptyReadWrite(tt *testing.T) {
 	if i.Free(t) != nil {
 		tt.Errorf("error freeing inode")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
 
 // Covers:
@@ -98,7 +98,7 @@ func TestBasicReadWrite(tt *testing.T) {
 	if !cmp.Equal(expect, *i) {
 		tt.Errorf("didn't get right inode, got %v/wanted %v\n", *i, expect)
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	cnt, err := Writei(t, 0, 0, strings.Repeat("hello", 4097))
@@ -109,7 +109,7 @@ func TestBasicReadWrite(tt *testing.T) {
 		tt.Errorf("error during write")
 	}
 
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	data := Readi(0, 0, 99999)
 	if data != strings.Repeat("hello", 4097) {
@@ -120,7 +120,7 @@ func TestBasicReadWrite(tt *testing.T) {
 	if i.Free(t) != nil {
 		tt.Errorf("error freeing inode")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
 
 // Covers:
@@ -140,7 +140,7 @@ func TestMassiveWrite(tt *testing.T) {
 	if !cmp.Equal(expect, *i) {
 		tt.Errorf("didn't get right inode, got %v/wanted %v\n", *i, expect)
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	s := strings.Repeat("h", 3000000)
@@ -150,13 +150,13 @@ func TestMassiveWrite(tt *testing.T) {
 		tt.Errorf("seriously dude?")
 	}
 
-	t.AbortTransaction(true)
+	t.AbortTransaction()
 
 	t = jrnl.BeginTransaction()
 	if i.Free(t) != nil {
 		tt.Errorf("error freeing inode")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
 
 // Covers:
@@ -166,11 +166,11 @@ func TestDoubleAlloc(tt *testing.T) {
 	initUut()
 	t := jrnl.BeginTransaction()
 	i1 := Alloci(t, File)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	i2 := Alloci(t, File)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	if cmp.Equal(i1, i2) {
 		tt.Errorf("allocated same inode twice")
@@ -178,7 +178,7 @@ func TestDoubleAlloc(tt *testing.T) {
 	t = jrnl.BeginTransaction()
 	i1.Free(t)
 	i2.Free(t)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
 
 // Covers:
@@ -196,7 +196,7 @@ func TestStressAlloc(tt *testing.T) {
 			txns = append(txns, jrnl.BeginTransaction())
 			fmt.Printf("Getting %d\n", i)
 			allocs = append(allocs, Alloci(txns[i], File))
-			txns[i].EndTransaction(false, true)
+			txns[i].EndTransaction(false)
 		}
 
 		fmt.Printf("\t****Freeing...\n")
@@ -204,7 +204,7 @@ func TestStressAlloc(tt *testing.T) {
 		for m := 0; m < 100; m++ {
 			allocs[m].Free(t)
 		}
-		t.EndTransaction(false, true)
+		t.EndTransaction(false)
 	}
 
 }
@@ -217,7 +217,7 @@ func TestSmallOffset(tt *testing.T) {
 	initUut()
 	t := jrnl.BeginTransaction()
 	i1 := Alloci(t, File)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	cnt, err := Writei(t, i1.Serialnum, 0, strings.Repeat("a", 10))
@@ -226,7 +226,7 @@ func TestSmallOffset(tt *testing.T) {
 	} else if err != nil {
 		tt.Errorf("error during initial write")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	cnt, err = Writei(t, i1.Serialnum, 3, "bbb")
@@ -235,7 +235,7 @@ func TestSmallOffset(tt *testing.T) {
 	} else if err != nil {
 		tt.Errorf("error during follow-on offsetted write")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	dat := Readi(i1.Serialnum, 2, 7)
 	expect := "abbbaaa"
@@ -245,7 +245,7 @@ func TestSmallOffset(tt *testing.T) {
 
 	t = jrnl.BeginTransaction()
 	i1.Free(t)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
 
 // Covers:
@@ -255,7 +255,7 @@ func TestBigOffsets(tt *testing.T) {
 	initUut()
 	t := jrnl.BeginTransaction()
 	i1 := Alloci(t, File)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	t = jrnl.BeginTransaction()
 	cnt, err := Writei(t, i1.Serialnum, 0, strings.Repeat("a", 10))
@@ -264,7 +264,7 @@ func TestBigOffsets(tt *testing.T) {
 	} else if err != nil {
 		tt.Errorf("error during initial write")
 	}
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 
 	data := Readi(i1.Serialnum, 50, 10)
 	if data != "" {
@@ -277,8 +277,8 @@ func TestBigOffsets(tt *testing.T) {
 		tt.Errorf("somehow wrote off the end")
 	}
 
-	t.AbortTransaction(true)
+	t.AbortTransaction()
 	t = jrnl.BeginTransaction()
 	i1.Free(t)
-	t.EndTransaction(false, true)
+	t.EndTransaction(false)
 }
